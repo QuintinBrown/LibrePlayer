@@ -48,7 +48,7 @@ public class Decoder implements AutoCloseable {
 
     private int sampleRate;
     private int channels;
-    private AudioFormat outputFormat;
+    private final AudioFormat OUTPUT_FORMAT;
 
     private int outputSampleRate;
     private int outputChannels;
@@ -67,7 +67,7 @@ public class Decoder implements AutoCloseable {
     public Decoder(Path source) {
         this.source = source;
 
-        this.outputFormat = new AudioFormat(outputSampleRate, 16, outputChannels, true, false);
+        this.OUTPUT_FORMAT = new AudioFormat(outputSampleRate, 16, outputChannels, true, false);
     }
 
     private String getErrorString(int errorCode) {
@@ -419,7 +419,7 @@ public class Decoder implements AutoCloseable {
 
     }
 
-    public AudioFormat getOutputFormat() {return outputFormat;}
+    public AudioFormat getOutputFormat() {return OUTPUT_FORMAT;}
 
     public boolean isFinished() {
 
