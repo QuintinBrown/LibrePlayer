@@ -72,10 +72,6 @@ public class Decoder implements AutoCloseable {
 
     private BytePointer pcmBuffer;
 
-    public Decoder(Path source) {
-        this.source = source;
-    }
-
     private String getErrorString(int errorCode) {
         BytePointer buffer = new BytePointer(1024);
         
@@ -258,15 +254,19 @@ public class Decoder implements AutoCloseable {
             );
         }
 
+        PointerPointer<BytePointer> outputPointer = new PointerPointer<>(1);
+        outputPointer.put(0, output);
+
         int outputSamples = swresample.swr_convert(
             swrContext,
-            new PointerPointer<>(output),
+            outputPointer,
             MAX_OUTPUT_SAMPLES,
             frame.data(),
             frame.nb_samples()
         );
 
         if (outputSamples < 0) {
+            outputPointer.close();
             throw new RuntimeException("Failed to resample: " + getErrorString(outputSamples));
         }
 
@@ -280,6 +280,8 @@ public class Decoder implements AutoCloseable {
         lastTrimDiscardSamples = discard;
 
         int bytesPerSample = avutil.av_get_bytes_per_sample(avutil.AV_SAMPLE_FMT_S16);
+
+        outputPointer.close();
 
         return outputSamples * outputChannels * bytesPerSample;
     }
