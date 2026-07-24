@@ -44,6 +44,8 @@ public class Decoder implements AutoCloseable {
 
     private int audioStreamIndex;
 
+    private int pcmBufferSize;
+
     private int sampleRate;
     private int channels;
     private AudioFormat outputFormat;
@@ -265,6 +267,11 @@ public class Decoder implements AutoCloseable {
             formatContext = null;
         }
 
+        if (pcmBuffer != null) {
+            pcmBuffer.close();
+            pcmBuffer = null;
+        }
+
         audioStream = null;
         codec = null;
 
@@ -289,6 +296,17 @@ public class Decoder implements AutoCloseable {
             initializeFormatContext();
             initializeCodec();
             initializeResampler();
+
+            int bytesPerSample = avutil.av_get_bytes_per_sample(outputSampleFormat);
+
+            pcmBufferSize = MAX_OUTPUT_SAMPLES * outputChannels * bytesPerSample;
+
+            pcmBuffer = new BytePointer(pcmBufferSize);
+
+            if (pcmBuffer == null) {
+                throw new RuntimeException("Failed to allocate PCM buffer");
+            }
+
             packet = avcodec.av_packet_alloc();
 
             if (packet == null) {
