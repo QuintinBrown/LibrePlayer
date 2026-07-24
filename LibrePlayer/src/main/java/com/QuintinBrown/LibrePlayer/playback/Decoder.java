@@ -17,6 +17,7 @@ import org.bytedeco.ffmpeg.avutil.AVChannelLayout;
 import org.bytedeco.ffmpeg.avutil.AVDictionary;
 import org.bytedeco.ffmpeg.avutil.AVFrame;
 import org.bytedeco.ffmpeg.avutil.AVFrameSideData;
+import org.bytedeco.ffmpeg.avutil.AVRational;
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
@@ -473,29 +474,87 @@ public class Decoder implements AutoCloseable {
         return timestamp;
     }
 
-    public Duration getPosition(){}
-
-    public long getCurrentPTS(){}
-
     public AudioFormat getOutputFormat(){return outputFormat;}
 
     public boolean isFinished() {
         return eof && pcmCachePosition >= pcmCacheLength;
     }
 
-    public int getOutputSampleRate(){}
+    public int getOutputSampleRate(){return outputSampleRate;}
 
-    public int getOutputChannels(){}
+    public int getOutputChannels(){return outputChannels;}
 
-    public long getTotalSamples(){}
+    public long getTotalSamples(){
+        if (audioStream == null) {
+            return 0;
+        }
 
-    public Duration getDuration(){}
+        AVRational timeBase = audioStream.time_base();
 
-    public Duration getCurrentTime(){}
+        long duration = audioStream.duration();
 
-    public String getCodecName(){}
+        if (duration == avutil.AV_NOPTS_VALUE) {
+            return 0;
+        }
 
-    public int getBitrate(){}
+        double seconds = duration * avutil.av_q2d(timeBase);
+
+        return (long) (seconds * outputSampleRate);
+    }
+
+    public Duration getDuration(){
+        if (audioStream == null) {
+            return Duration.ZERO;
+        }
+
+        long duration = audioStream.duration();
+
+        if (duration == avutil.AV_NOPTS_VALUE) {
+            return Duration.ZERO;
+        }
+
+        double seconds = duration * avutil.av_q2d(audioStream.time_base());
+
+        return Duration.ofMillis((long) (seconds * 1000));
+    }
+
+    public Duration getCurrentTime(){
+        if (currentPts == avutil.AV_NOPTS_VALUE || audioStream == null) {
+            return Duration.ZERO;
+        }
+
+        double seconds = currentPts * avutil.av_q2d(audioStream.time_base());
+
+        return Duration.ofMillis((long) (seconds * 1000));
+    }
+
+    public String getCodecName(){if (codec == null){return null;} return codec.name().getString();}
+
+    public long getBitrate(){if (codecContext == null){return 0;} return codecContext.bit_rate();}
+
+    public Path getSource() {
+        return source;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public boolean isEOF() {
+        return eof;
+    }
+
+    public int getAudioStreamIndex() {
+        return audioStreamIndex;
+    }
+
+    public String getSampleFormatName() {
+        return avutil.av_get_sample_fmt_name(sampleFormat).getString();
+    }
+
+    public int getBitDepth() {
+        return avutil.av_get_bytes_per_sample(outputSampleFormat) * 8;
+    }
 
     @Override
     public void close() {
