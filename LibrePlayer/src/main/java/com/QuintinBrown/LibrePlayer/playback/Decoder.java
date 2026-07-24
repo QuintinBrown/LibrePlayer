@@ -271,7 +271,7 @@ public class Decoder implements AutoCloseable {
         }
 
         int skip = (int) Math.min(pendingSkipSamples, outputSamples);
-        pendingSkipSamples = skip;
+        pendingSkipSamples -= skip;
 
         int remaining = outputSamples - skip;
         int discard = (int) Math.min(pendingFrameDiscard, remaining);
