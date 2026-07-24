@@ -1,8 +1,10 @@
 package com.QuintinBrown.LibrePlayer.playback;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Objects;
 
 import javax.sound.sampled.AudioFormat;
 
@@ -25,7 +27,7 @@ import org.bytedeco.javacpp.PointerPointer;
 
 public class Decoder implements AutoCloseable {
 
-    private final Path source;
+    private Path source;
 
     private AVFormatContext formatContext;
     private AVCodecContext codecContext;
@@ -269,7 +271,41 @@ public class Decoder implements AutoCloseable {
     }
     
     public void open(Path file) {
+        if (initialized) {
+            close();
+        }
 
+        Objects.requireNonNull(file, "file");
+
+        if (!Files.exists(file)) {
+            throw new RuntimeException("File does not exist: " + file);
+        }
+
+        this.source = file;
+
+        try {
+            initializeFormatContext();
+            initializeCodec();
+            initializeResampler();
+            packet = avcodec.av_packet_alloc();
+
+            if (packet == null) {
+                throw new RuntimeException("Failed to allocate AVPacket");
+            }
+
+            frame = avutil.av_frame_alloc();
+
+            if (frame == null) {
+                throw new RuntimeException("Failed to allocate AVFrame");
+            }
+
+            eof = false;
+            initialized = true;
+
+        } catch (Exception e) {
+            clean();
+            throw e;
+        }
     }
 
     public int read(byte[] buffer) {
