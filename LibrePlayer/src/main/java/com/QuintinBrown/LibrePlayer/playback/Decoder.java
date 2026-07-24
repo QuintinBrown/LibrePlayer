@@ -58,6 +58,10 @@ public class Decoder implements AutoCloseable {
     private boolean eof;
     private boolean initialized;
 
+    private byte[] pcmCache;
+    private int pcmCachePosition;
+    private int pcmCacheLength;
+
     private BytePointer pcmBuffer;
 
     public Decoder(Path source) {
@@ -178,7 +182,7 @@ public class Decoder implements AutoCloseable {
         while (true) {
 
             avutil.av_frame_unref(frame);
-            
+
             // try to pull queued frame
             int result = avcodec.avcodec_receive_frame(codecContext, frame);
 
@@ -328,6 +332,10 @@ public class Decoder implements AutoCloseable {
                 throw new RuntimeException("Failed to allocate PCM buffer");
             }
 
+            pcmCache = new byte[pcmBufferSize];
+            pcmCachePosition = 0;
+            pcmCacheLength = 0;
+
             packet = avcodec.av_packet_alloc();
 
             if (packet == null) {
@@ -350,16 +358,40 @@ public class Decoder implements AutoCloseable {
     }
 
     public int read(byte[] buffer) {
-        if (!decodeNextFrame()) {
-            return -1;
+        int totalCopied = 0;
+
+        while (totalCopied < buffer.length) {
+            if (pcmCachePosition >= pcmCacheLength) {
+                // EOF
+                if (!decodeNextFrame()) {
+                    if (totalCopied == 0) {
+                        return -1;
+                    }
+
+                    break;
+                }
+
+                int bytes = convertFrametoPCM(pcmBuffer);
+                pcmBuffer.position(0);
+                pcmBuffer.get(pcmCache, 0, bytes);
+
+                pcmCachePosition = 0;
+                pcmCacheLength = bytes;
+            }
+
+            int available = pcmCacheLength = pcmCachePosition;
+
+            int wanted = buffer.length - totalCopied;
+
+            int copy = Math.min(available, wanted);
+
+            System.arraycopy(pcmCache, pcmCachePosition, buffer, totalCopied, copy);
+
+            pcmCachePosition += copy;
+            totalCopied += copy;
         }
 
-        int bytes = convertFrametoPCM(pcmBuffer);
-
-        pcmBuffer.position(0);
-        pcmBuffer.get(buffer, 0, bytes);
-
-        return bytes;
+        return totalCopied;
     }
 
     public long seek(Duration position, int flags) {
