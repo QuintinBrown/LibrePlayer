@@ -1,6 +1,5 @@
 package com.QuintinBrown.LibrePlayer.playback;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -48,7 +47,7 @@ public class Decoder implements AutoCloseable {
 
     private int sampleRate;
     private int channels;
-    private final AudioFormat OUTPUT_FORMAT;
+    private AudioFormat outputFormat;
 
     private int outputSampleRate;
     private int outputChannels;
@@ -62,12 +61,12 @@ public class Decoder implements AutoCloseable {
     private int pcmCachePosition;
     private int pcmCacheLength;
 
+    private long currentPts = avutil.AV_NOPTS_VALUE;
+
     private BytePointer pcmBuffer;
 
     public Decoder(Path source) {
         this.source = source;
-
-        this.OUTPUT_FORMAT = new AudioFormat(outputSampleRate, 16, outputChannels, true, false);
     }
 
     private String getErrorString(int errorCode) {
@@ -135,7 +134,8 @@ public class Decoder implements AutoCloseable {
 
         this.sampleRate = codecContext.sample_rate();
         this.channels = codecContext.ch_layout().nb_channels();
-        this.channelLayout = codecContext.ch_layout();
+        this.channelLayout = new AVChannelLayout();
+        avutil.av_channel_layout_copy(channelLayout, codecContext.ch_layout());
         this.sampleFormat = codecContext.sample_fmt();
     }
 
@@ -175,6 +175,8 @@ public class Decoder implements AutoCloseable {
         this.outputSampleRate = codecContext.sample_rate();
         this.outputChannels = outputLayout.nb_channels();
 
+        this.outputFormat = new AudioFormat(outputSampleRate, 16, outputChannels, true, false);
+
         outputLayout.close();
     }
 
@@ -187,6 +189,7 @@ public class Decoder implements AutoCloseable {
             int result = avcodec.avcodec_receive_frame(codecContext, frame);
 
             if (result == 0) {
+                currentPts = frame.best_effort_timestamp();
                 return true;
             }
 
@@ -200,40 +203,52 @@ public class Decoder implements AutoCloseable {
             }
 
             while (true) {
-                result = avformat.av_read_frame(formatContext, packet);
+                if (packet.size() == 0) {
+                    int readResult = avformat.av_read_frame(formatContext, packet);
 
-                if (result == avutil.AVERROR_EOF) {
-                    checkError(avcodec.avcodec_send_packet(codecContext, null));
+                    if (readResult == avutil.AVERROR_EOF) {
+                        checkError(avcodec.avcodec_send_packet(codecContext, null));
+                        break;
+                    }
 
-                    break;
+                    checkError(readResult);
+
+                    if (packet.stream_index() != audioStreamIndex) {
+                        avcodec.av_packet_unref(packet);
+                        continue;
+                    }
                 }
 
-                checkError(result);
+                int sendResult = avcodec.avcodec_send_packet(codecContext, packet);
 
-                if (packet.stream_index() != audioStreamIndex) {
+                if (sendResult == 0) {
                     avcodec.av_packet_unref(packet);
-                    continue;
+                    break;
                 }
 
-                result = avcodec.avcodec_send_packet(codecContext, packet);
+                if (sendResult == avutil.AVERROR_EAGAIN()) {
+                    break;
+                }
+
                 avcodec.av_packet_unref(packet);
-
-                if (result == 0) {
-                    break;
-                }
-
-                if (result == avutil.AVERROR_EAGAIN()) {
-                    // decoder output queue is full, go back and receive frames
-                    
-                    break;
-                }
-
-                checkError(result);
+                checkError(sendResult);
             }
         }
     }
 
     private int convertFrametoPCM(BytePointer output) {
+        int maxPossibleSamples = swresample.swr_get_out_samples(swrContext, frame.nb_samples());
+
+        if (maxPossibleSamples < 0) {
+            throw new RuntimeException("Failed to compute output sample count: " + getErrorString(maxPossibleSamples));
+        }
+
+        if (maxPossibleSamples > MAX_OUTPUT_SAMPLES) {
+            throw new RuntimeException(
+                "PCM buffer too small, need capacity for: " + maxPossibleSamples + "only have: " + MAX_OUTPUT_SAMPLES
+            );
+        }
+
         int outputSamples = swresample.swr_convert(
             swrContext,
             new PointerPointer<>(output),
@@ -243,7 +258,7 @@ public class Decoder implements AutoCloseable {
         );
 
         if (outputSamples < 0) {
-            throw new RuntimeException("Failed to resample");
+            throw new RuntimeException("Failed to resample: " + getErrorString(outputSamples));
         }
 
         int bytesPerSample = avutil.av_get_bytes_per_sample(avutil.AV_SAMPLE_FMT_S16);
@@ -295,6 +310,12 @@ public class Decoder implements AutoCloseable {
         if (pcmBuffer != null) {
             pcmBuffer.close();
             pcmBuffer = null;
+        }
+
+        if (channelLayout != null) {
+            avutil.av_channel_layout_uninit(channelLayout);
+            channelLayout.close();
+            channelLayout = null;
         }
 
         audioStream = null;
@@ -379,7 +400,7 @@ public class Decoder implements AutoCloseable {
                 pcmCacheLength = bytes;
             }
 
-            int available = pcmCacheLength = pcmCachePosition;
+            int available = pcmCacheLength - pcmCachePosition;
 
             int wanted = buffer.length - totalCopied;
 
@@ -408,22 +429,35 @@ public class Decoder implements AutoCloseable {
         avcodec.av_packet_unref(packet);
         avutil.av_frame_unref(frame);
 
+        pcmCachePosition = 0;
+        pcmCacheLength = 0;
+
         return timestamp;
     }
 
-    public Duration getPosition() {
+    public Duration getPosition(){}
 
-    }
+    public long getCurrentPTS(){}
 
-    public Duration getDuration() {
-
-    }
-
-    public AudioFormat getOutputFormat() {return OUTPUT_FORMAT;}
+    public AudioFormat getOutputFormat(){return outputFormat;}
 
     public boolean isFinished() {
-
+        return eof && pcmCachePosition >= pcmCacheLength;
     }
+
+    public int getOutputSampleRate(){}
+
+    public int getOutputChannels(){}
+
+    public long getTotalSamples(){}
+
+    public Duration getDuration(){}
+
+    public Duration getCurrentTime(){}
+
+    public String getCodecName(){}
+
+    public int getBitrate(){}
 
     @Override
     public void close() {
