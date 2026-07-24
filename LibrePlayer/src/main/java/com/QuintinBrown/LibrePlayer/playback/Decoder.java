@@ -321,8 +321,19 @@ public class Decoder implements AutoCloseable {
         return bytes;
     }
 
-    public boolean seek(Duration position) {
+    public void seek(Duration position, int flags) {
+        Objects.requireNonNull(position, "position");
 
+        long timestamp = avutil.av_rescale_q(position.toMillis(), avutil.av_make_q(1, 1000), audioStream.time_base());
+
+        checkError(
+            avformat.av_seek_frame(formatContext, audioStreamIndex, timestamp, flags)
+        );
+
+        flushDecoder();
+
+        avcodec.av_packet_unref(packet);
+        avutil.av_frame_unref(frame);
     }
 
     public Duration getPosition() {
