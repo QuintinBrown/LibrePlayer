@@ -60,6 +60,8 @@ public class Decoder implements AutoCloseable {
 
     public Decoder(Path source) {
         this.source = source;
+
+        this.outputFormat = new AudioFormat(outputSampleRate, 16, outputChannels, true, false);
     }
 
     private String getErrorString(int errorCode) {
@@ -219,7 +221,7 @@ public class Decoder implements AutoCloseable {
 
         int bytesPerSample = avutil.av_get_bytes_per_sample(avutil.AV_SAMPLE_FMT_S16);
 
-        return outputSamples * codecContext.ch_layout().nb_channels() * bytesPerSample;
+        return outputSamples * outputChannels * bytesPerSample;
     }
 
     private void flushDecoder() {
@@ -321,7 +323,7 @@ public class Decoder implements AutoCloseable {
         return bytes;
     }
 
-    public void seek(Duration position, int flags) {
+    public long seek(Duration position, int flags) {
         Objects.requireNonNull(position, "position");
 
         long timestamp = avutil.av_rescale_q(position.toMillis(), avutil.av_make_q(1, 1000), audioStream.time_base());
@@ -334,6 +336,8 @@ public class Decoder implements AutoCloseable {
 
         avcodec.av_packet_unref(packet);
         avutil.av_frame_unref(frame);
+
+        return timestamp;
     }
 
     public Duration getPosition() {
@@ -344,9 +348,7 @@ public class Decoder implements AutoCloseable {
 
     }
 
-    public AudioFormat getOutputFormat() {
-
-    }
+    public AudioFormat getOutputFormat() {return outputFormat;}
 
     public boolean isFinished() {
 
