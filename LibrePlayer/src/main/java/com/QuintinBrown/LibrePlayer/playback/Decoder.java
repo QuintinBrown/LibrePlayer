@@ -175,14 +175,35 @@ public class Decoder implements AutoCloseable {
     }
 
     private boolean decodeNextFrame() {
-        
-        // read the next packet
         while (true) {
-            int result = avformat.av_read_frame(formatContext, packet);
+
+            avutil.av_frame_unref(frame);
+            
+            // try to pull queued frame
+            int result = avcodec.avcodec_receive_frame(codecContext, frame);
+
+            if (result == 0) {
+                return true;
+            }
 
             if (result == avutil.AVERROR_EOF) {
-                checkError(avcodec.avcodec_send_packet(codecContext, null));
-            } else {
+                eof = true;
+                return false;
+            }
+
+            if (result != avutil.AVERROR_EAGAIN()) {
+                checkError(result);
+            }
+
+            while (true) {
+                result = avformat.av_read_frame(formatContext, packet);
+
+                if (result == avutil.AVERROR_EOF) {
+                    checkError(avcodec.avcodec_send_packet(codecContext, null));
+
+                    break;
+                }
+
                 checkError(result);
 
                 if (packet.stream_index() != audioStreamIndex) {
@@ -190,21 +211,21 @@ public class Decoder implements AutoCloseable {
                     continue;
                 }
 
-                checkError(avcodec.avcodec_send_packet(codecContext, packet));
-
+                result = avcodec.avcodec_send_packet(codecContext, packet);
                 avcodec.av_packet_unref(packet);
+
+                if (result == 0) {
+                    break;
+                }
+
+                if (result == avutil.AVERROR_EAGAIN()) {
+                    // decoder output queue is full, go back and receive frames
+                    
+                    break;
+                }
+
+                checkError(result);
             }
-
-            result = avcodec.avcodec_receive_frame(codecContext, frame);
-
-            if (result == avutil.AVERROR_EOF) {
-                this.eof = true;
-                return false;
-            } else if (result == 0) {
-                return true;
-            }
-
-            checkError(result);
         }
     }
 
