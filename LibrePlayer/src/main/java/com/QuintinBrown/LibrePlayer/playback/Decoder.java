@@ -16,6 +16,7 @@ import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVChannelLayout;
 import org.bytedeco.ffmpeg.avutil.AVDictionary;
 import org.bytedeco.ffmpeg.avutil.AVFrame;
+import org.bytedeco.ffmpeg.avutil.AVFrameSideData;
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.ffmpeg.global.avutil;
@@ -62,6 +63,11 @@ public class Decoder implements AutoCloseable {
     private int pcmCacheLength;
 
     private long currentPts = avutil.AV_NOPTS_VALUE;
+
+    private long pendingSkipSamples = 0;
+    private int lastTrimSkipSamples = 0;
+    private int lastTrimDiscardSamples = 0;
+    private long pendingFrameDiscard = 0;
 
     private BytePointer pcmBuffer;
 
@@ -237,6 +243,8 @@ public class Decoder implements AutoCloseable {
     }
 
     private int convertFrametoPCM(BytePointer output) {
+        checkGaplessSideData();
+
         int maxPossibleSamples = swresample.swr_get_out_samples(swrContext, frame.nb_samples());
 
         if (maxPossibleSamples < 0) {
@@ -260,6 +268,15 @@ public class Decoder implements AutoCloseable {
         if (outputSamples < 0) {
             throw new RuntimeException("Failed to resample: " + getErrorString(outputSamples));
         }
+
+        int skip = (int) Math.min(pendingSkipSamples, outputSamples);
+        pendingSkipSamples = skip;
+
+        int remaining = outputSamples - skip;
+        int discard = (int) Math.min(pendingFrameDiscard, remaining);
+
+        lastTrimSkipSamples = skip;
+        lastTrimDiscardSamples = discard;
 
         int bytesPerSample = avutil.av_get_bytes_per_sample(avutil.AV_SAMPLE_FMT_S16);
 
@@ -323,6 +340,24 @@ public class Decoder implements AutoCloseable {
 
         initialized = false;
         eof = false;
+    }
+
+    private void checkGaplessSideData() {
+        AVFrameSideData sd = avutil.av_frame_get_side_data(frame, avutil.AV_FRAME_DATA_SKIP_SAMPLES);
+
+        long frameDiscard = 0;
+
+        if (sd != null && !sd.isNull()) {
+            BytePointer data = sd.data();
+            long skip = data.getInt(0) & 0xFFFFFFFFL;
+            frameDiscard = data.getInt(4) & 0xFFFFFFFFL;
+
+            if (skip > 0) {
+                pendingSkipSamples += skip;
+            }
+        }
+
+        this.pendingFrameDiscard = frameDiscard;
     }
     
     public void open(Path file) {
@@ -396,8 +431,11 @@ public class Decoder implements AutoCloseable {
                 pcmBuffer.position(0);
                 pcmBuffer.get(pcmCache, 0, bytes);
 
-                pcmCachePosition = 0;
-                pcmCacheLength = bytes;
+                int bytesPerSample = avutil.av_get_bytes_per_sample(avutil.AV_SAMPLE_FMT_S16);
+                int frameStride = outputChannels * bytesPerSample;
+
+                pcmCachePosition = lastTrimSkipSamples * frameStride;
+                pcmCacheLength = bytes - (lastTrimDiscardSamples * frameStride);
             }
 
             int available = pcmCacheLength - pcmCachePosition;
