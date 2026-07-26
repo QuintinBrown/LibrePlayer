@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Log directory -->
+    <property name="LOG_DIR" value="logs"/>
+
+    <!-- Console output -->
+    <appender name="CONSOLE"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Rolling log file -->
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>${LOG_DIR}/LibrePlayer.log</file>
+
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+
+            <!-- Daily log with size rollover -->
+            <fileNamePattern>${LOG_DIR}/LibrePlayer.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+
+            <!-- Roll over after 10 MB -->
+            <maxFileSize>10MB</maxFileSize>
+
+            <!-- Keep 30 days -->
+            <maxHistory>30</maxHistory>
+
+            <!-- Optional total cap -->
+            <totalSizeCap>500MB</totalSizeCap>
+
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+
+    </appender>
+
+    <!-- Suppress noisy libraries if needed -->
+    <logger name="org.bytedeco" level="WARN"/>
+    <logger name="org.ffmpeg" level="WARN"/>
+
+    <!-- Your application -->
+    <logger name="com.QuintinBrown.LibrePlayer" level="DEBUG"/>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

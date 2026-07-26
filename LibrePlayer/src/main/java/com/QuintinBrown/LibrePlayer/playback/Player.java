@@ -52,8 +52,6 @@ public class Player {
         decoder.open(source);
 
         output.open(decoder.getOutputFormat());
-
-        output.start();
     }
 
     public synchronized void play() {
