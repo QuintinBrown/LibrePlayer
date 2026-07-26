@@ -8,8 +8,6 @@ public class Player {
 
     private Thread playbackThread;
 
-    private Track currentTrack;
-
     private PlaybackState state = PlaybackState.STOPPED;
 
     private byte[] buffer;
