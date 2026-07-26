@@ -2,7 +2,7 @@ package com.QuintinBrown.LibrePlayer.ui;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 public class App extends Application {
@@ -10,9 +10,14 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
 
-        stage.setTitle("LibrePlayer");
-        stage.setScene(new Scene(new Label("Test"), 400, 300));
-        stage.show();
+        try {
+            BorderPane root = new BorderPane();
+            Scene scene = new Scene(root, 1280,720);
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
 }
