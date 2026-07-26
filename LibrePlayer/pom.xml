@@ -50,6 +50,11 @@
         <version>${controlsfx.version}</version>
         <scope>compile</scope>
     </dependency>
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-fxml</artifactId>
+        <version>${javafx.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
