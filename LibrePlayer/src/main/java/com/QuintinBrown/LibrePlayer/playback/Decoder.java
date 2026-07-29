@@ -47,8 +47,6 @@ public class Decoder implements AutoCloseable {
 
     private int pcmBufferSize;
 
-    private int sampleRate;
-    private int channels;
     private AudioFormat outputFormat;
 
     private int outputSampleRate;
@@ -135,8 +133,6 @@ public class Decoder implements AutoCloseable {
 
         checkError(avcodec.avcodec_open2(codecContext, codec, (AVDictionary) null));
 
-        this.sampleRate = codecContext.sample_rate();
-        this.channels = codecContext.ch_layout().nb_channels();
         this.channelLayout = new AVChannelLayout();
         avutil.av_channel_layout_copy(channelLayout, codecContext.ch_layout());
         this.sampleFormat = codecContext.sample_fmt();
