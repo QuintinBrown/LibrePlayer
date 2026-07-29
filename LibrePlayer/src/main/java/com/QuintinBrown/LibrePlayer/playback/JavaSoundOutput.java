@@ -6,20 +6,24 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class JavaSoundOutput implements AudioOutput {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JavaSoundOutput.class);
+
     private SourceDataLine line;
-    private AudioFormat format;
     private boolean paused;
 
     @Override
     public void open(AudioFormat format) {
-        this.format = format;
 
         try {
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
             line = (SourceDataLine) AudioSystem.getLine(info);
 
             line.open(format);
+            LOGGER.info("Dataline opened");
 
         } catch (LineUnavailableException e) {
             throw new RuntimeException("Failed to open audio device " + e);
@@ -53,6 +57,7 @@ public class JavaSoundOutput implements AudioOutput {
             line.stop();
             paused = true;
         }
+        LOGGER.info("Playback Paused");
     }
 
     @Override
@@ -61,6 +66,8 @@ public class JavaSoundOutput implements AudioOutput {
             line.start();
             paused = false;
         }
+
+        LOGGER.info("Playback resumed");
     }
 
     @Override
@@ -68,6 +75,8 @@ public class JavaSoundOutput implements AudioOutput {
         if (line != null) {
             line.flush();
         }
+
+        LOGGER.info("Line flushed");
     }
 
     @Override
@@ -83,5 +92,7 @@ public class JavaSoundOutput implements AudioOutput {
 
             line = null;
         }
+
+        LOGGER.info("Line closed");
     }
 }
