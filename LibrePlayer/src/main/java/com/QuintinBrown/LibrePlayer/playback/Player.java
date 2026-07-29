@@ -2,7 +2,12 @@ package com.QuintinBrown.LibrePlayer.playback;
 
 import java.nio.file.Path;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Player {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Player.class);
+
     private final Decoder decoder;
     private final AudioOutput output;
 
@@ -40,7 +45,7 @@ public class Player {
                 output.write(buffer, 0, bytes);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error in UI: " + e);
         } finally {
             output.flush();
             state = PlaybackState.STOPPED;
@@ -49,9 +54,15 @@ public class Player {
     }
 
     public void open(Path source) {
+        if (state == PlaybackState.PLAYING) {
+            pause();
+        }
+
         decoder.open(source);
 
         output.open(decoder.getOutputFormat());
+
+        LOGGER.info("Opened file at: " + source.toString());
     }
 
     public synchronized void play() {
@@ -80,6 +91,8 @@ public class Player {
         playbackThread.start();
 
         state = PlaybackState.PLAYING;
+
+        LOGGER.info("Started playback");
     }
 
     public synchronized void pause() {
@@ -92,5 +105,7 @@ public class Player {
         output.pause();
 
         state = PlaybackState.PAUSED;
+
+        LOGGER.info("Playback paused");
     }
 }
