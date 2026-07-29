@@ -17,11 +17,19 @@ public class App extends Application {
     public void start(Stage stage) {
 
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/App.fxml"));
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App.fxml"));
+
+            Parent root = loader.load();
+
             Scene scene = new Scene(root);
+
             stage.setScene(scene);
+            stage.setTitle("LibrePlayer");
             stage.show();
+
             LOGGER.info("Started UI");
+
         } catch (Exception e) {
             LOGGER.error("Error in UI:" + e);
         }
