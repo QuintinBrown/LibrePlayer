@@ -7,7 +7,6 @@ import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
 import com.QuintinBrown.LibrePlayer.library.ImportManager;
 
 import javafx.concurrent.Task;
-import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.stage.DirectoryChooser;
 
@@ -15,7 +14,6 @@ public class LibraryController {
 
     private final ImportManager importManager;
 
-    @FXML
     private Button importButton;
     
     public LibraryController() {
@@ -23,7 +21,6 @@ public class LibraryController {
         this.importManager = new ImportManager(database);
     }
 
-    @FXML
     private void chooseMusicFolder() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Music Folder");
