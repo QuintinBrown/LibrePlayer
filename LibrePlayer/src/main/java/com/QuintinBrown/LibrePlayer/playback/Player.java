@@ -108,4 +108,6 @@ public class Player {
 
         LOGGER.info("Playback paused");
     }
+
+    public PlaybackState getState() {return state;}
 }
