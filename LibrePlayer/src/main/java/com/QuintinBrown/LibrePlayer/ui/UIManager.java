@@ -1,9 +1,11 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-
 import netscape.javascript.JSObject;
 
 public class UIManager {
@@ -37,10 +39,13 @@ public class UIManager {
             }
         );
 
-        webEngine.load(
-            getClass().getResource("/ui/index.html").toExternalForm()
-        );
-
         return webView;
+    }
+
+    public void loadTheme(Path themeDirectory) {
+        Path htmlFile = themeDirectory.resolve("index.html");
+
+        if (!Files.exists(htmlFile)) throw new IllegalArgumentException("Theme does not contain index.html");
+        webEngine.load(htmlFile.toUri().toString());
     }
 }
