@@ -13,7 +13,7 @@ public class Player {
 
     private Thread playbackThread;
 
-    private PlaybackState state = PlaybackState.STOPPED;
+    private volatile PlaybackState state = PlaybackState.STOPPED;
 
     private byte[] buffer;
 
