@@ -4,27 +4,27 @@ import java.io.File;
 
 import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
 import com.QuintinBrown.LibrePlayer.library.ImportManager;
+import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
 
-import javafx.fxml.FXML;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
 public class Controller {
+
     private final Player PLAYER;
     private final ImportManager importManager;
 
-     public Controller() {
+    public Controller() {
         DatabaseManager database = new DatabaseManager();
 
         this.PLAYER = new Player();
         this.importManager = new ImportManager(database);
     }
 
-
-    @FXML
-    private void onOpen() {
+    public void open() {
         FileChooser chooser = new FileChooser();
+        chooser.setTitle("Open Audio File");
 
         File file = chooser.showOpenDialog(null);
 
@@ -33,20 +33,23 @@ public class Controller {
         }
     }
 
-    @FXML
-    private void onPlay() {
+    public void play() {
         PLAYER.play();
     }
 
-    @FXML
-    private void onPause() {
+    public void pause() {
         PLAYER.pause();
     }
 
+    public void togglePlayPause() {
+        if (PLAYER.getState() == PlaybackState.PLAYING) {
+            PLAYER.pause();
+        } else {
+            PLAYER.play();
+        }
+    }
 
-    @FXML
-    private void onImportMusic() {
-
+    public void importMusic() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Music Folder");
 
@@ -55,5 +58,9 @@ public class Controller {
         if (folder != null) {
             importManager.importLibrary(folder.toPath());
         }
+    }
+
+    public Player getPlayer() {
+        return PLAYER;
     }
 }
