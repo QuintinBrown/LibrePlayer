@@ -1,5 +1,8 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
 
@@ -7,6 +10,8 @@ public class PlayerAPI {
 
     private final Controller controller;
     private final Player player;
+
+    private final Logger logger = LoggerFactory.getLogger(PlayerAPI.class);
 
     public PlayerAPI(Controller controller) {
         this.controller = controller;
@@ -16,7 +21,7 @@ public class PlayerAPI {
     // Playback controls
 
     public void openFile() {
-        System.out.println("PlayerAPI: openFile called");
+        logger.info("PlayerAPI: openFile called");
         controller.openFile();
     }
 
