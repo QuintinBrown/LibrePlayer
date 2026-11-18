@@ -1,15 +1,20 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class LibraryAPI {
     private final LibraryController libraryController;
 
+    private final Logger logger = LoggerFactory.getLogger(LibraryAPI.class);
+
     public LibraryAPI(LibraryController libraryController) {
         this.libraryController = libraryController;
-        System.out.println("LibraryAPI initialized");
+        logger.info("LibraryAPI initialized");
     }
 
     public void importMusic() {
-        System.out.println("LibraryAPI: chooseMusicFolder called");
+        logger.info("LibraryAPI: chooseMusicFolder called");
         libraryController.chooseMusicFolder();
     }
 }
