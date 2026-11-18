@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Player {
+public class Player implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Player.class);
 
     private final Decoder decoder;
@@ -19,16 +19,15 @@ public class Player {
 
     private volatile boolean running;
     private volatile boolean paused;
+    private volatile boolean closed;
 
     public Player() {
         this.decoder = new Decoder();
-        this.buffer = new byte[4096];
+        this.buffer = new byte[8192];
         this.output = new JavaSoundOutput();
     }
 
     private void playbackLoop() {
-        buffer = new byte[8192];
-
         try {
             while (running) {
                 if (paused) {
@@ -44,31 +43,47 @@ public class Player {
 
                 output.write(buffer, 0, bytes);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+    
         } catch (Exception e) {
-            LOGGER.error("Error in UI: " + e);
+            if (running) {
+                LOGGER.error("Error in UI: " + e);
+            }
         } finally {
-            output.flush();
-            state = PlaybackState.STOPPED;
             running = false;
+            paused = false;
+            
+            synchronized (this) {
+                if (playbackThread == Thread.currentThread()) {
+                    playbackThread = null;
+                }
+
+                state = PlaybackState.STOPPED;
+            }
+            
+            LOGGER.info("Playback thread terminated");
         }
     }
 
     public void open(Path source) {
-        if (state == PlaybackState.PLAYING) {
-            pause();
-        }
+        ensureOpen();
+
+        stop();
 
         decoder.open(source);
 
         output.open(decoder.getOutputFormat());
 
-        LOGGER.info("Opened file at: " + source.toString());
+        LOGGER.info("Opened file at: {}", source);
     }
 
     public synchronized void play() {
-        //if (currentTrack == null) {
-        //    throw new IllegalStateException("No track loaded");
-        //}
+        ensureOpen();
+
+        if (!decoder.isInitialized()) {
+            throw new IllegalStateException("No file loaded");
+        }
 
         if (state == PlaybackState.PLAYING) {
             return;
@@ -107,6 +122,71 @@ public class Player {
         state = PlaybackState.PAUSED;
 
         LOGGER.info("Playback paused");
+    }
+
+    @Override
+    public synchronized void close() {
+        if (closed) {
+            return;
+        }
+
+        LOGGER.info("Closing player");
+
+        running = false;
+        paused = false;
+
+        Thread thread = playbackThread;
+
+        output.close();
+
+        if (thread != null && thread != Thread.currentThread()) {
+            thread.interrupt();
+
+            try {
+                thread.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+
+        decoder.close();
+
+        playbackThread = null;
+        state = PlaybackState.STOPPED;
+        closed = true;
+
+        LOGGER.info("Player closed");
+    }
+
+    private void ensureOpen() {
+        if (closed) {
+            throw new IllegalStateException("Player is closed");
+        }
+    }
+
+    public synchronized void stop() {
+        running = false;
+        paused = false;
+
+        Thread thread = playbackThread;
+
+        if (thread != null && thread != Thread.currentThread()) {
+            output.stop();
+            thread.interrupt();
+
+            try {
+                thread.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        } else {
+            output.stop();
+        }
+
+        state = PlaybackState.STOPPED;
+        LOGGER.info("Playback stopped");
     }
 
     public PlaybackState getState() {return state;}
