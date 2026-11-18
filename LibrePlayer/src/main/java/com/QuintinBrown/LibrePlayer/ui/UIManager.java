@@ -6,6 +6,7 @@ import com.QuintinBrown.LibrePlayer.ui.theme.ThemeManager;
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
 public class UIManager {
@@ -19,8 +20,11 @@ public class UIManager {
     private final WebView webView;
     private final WebEngine webEngine;
 
+    private final LibraryController libraryController;
+    private final LibraryAPI libraryAPI;
+
     
-    public UIManager() {
+    public UIManager(Stage stage) {
 
         this.webView = new WebView();
         this.webEngine = webView.getEngine();
@@ -30,6 +34,9 @@ public class UIManager {
 
         this.themeManager = new ThemeManager(webEngine);
         this.themeAPI = new ThemeAPI(themeManager);
+
+        this.libraryController = new LibraryController(stage);
+        this.libraryAPI = new LibraryAPI(libraryController);
 
         webEngine.setOnAlert(event ->
             System.out.println("[JavaScript Alert] " + event.getData())
@@ -55,12 +62,20 @@ public class UIManager {
 
                 window.setMember("player", playerAPI);
                 window.setMember("themes", themeAPI);
+                window.setMember("library", libraryAPI);
 
                 System.out.println("Player API registered");
+                System.out.println("Library API registered");
 
                 Object result = webEngine.executeScript(
                     "typeof window.player"
                 );
+
+                Object result2 = webEngine.executeScript(
+                    "typeof window.library.importMusic"
+                );
+
+                System.out.println("importMusic method type: " + result2);
 
                 System.out.println("Player API type: " + result);
             }
