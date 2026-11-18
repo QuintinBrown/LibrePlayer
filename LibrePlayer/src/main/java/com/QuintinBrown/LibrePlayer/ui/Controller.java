@@ -64,6 +64,10 @@ public class Controller {
         return folder.getAbsolutePath();
     }
 
+    public void shutdown() {
+        PLAYER.close();
+    }
+
     public Player getPlayer() {
         return PLAYER;
     }
