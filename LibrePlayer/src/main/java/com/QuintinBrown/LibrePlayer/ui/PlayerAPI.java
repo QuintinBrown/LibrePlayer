@@ -15,8 +15,9 @@ public class PlayerAPI {
 
     // Playback controls
 
-    public void open() {
-        controller.open();
+    public void openFile() {
+        System.out.println("PlayerAPI: openFile called");
+        controller.openFile();
     }
 
     public void play() {
@@ -30,7 +31,7 @@ public class PlayerAPI {
     public void togglePlayPause() {
         controller.togglePlayPause();
     }
-
+    
     // Playback information
 
     public boolean isPlaying() {
@@ -47,7 +48,7 @@ public class PlayerAPI {
 
     // Library actions
 
-    public void importMusic() {
-        controller.importMusic();
+    public String importMusic() {
+        return controller.importMusic();
     }
 }
