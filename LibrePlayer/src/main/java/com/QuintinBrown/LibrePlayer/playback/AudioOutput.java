@@ -2,7 +2,7 @@ package com.QuintinBrown.LibrePlayer.playback;
 
 import javax.sound.sampled.AudioFormat;
 
-public interface AudioOutput extends AutoCloseable {
+public interface AudioOutput {
     void open(AudioFormat format);
 
     void start();
@@ -14,6 +14,10 @@ public interface AudioOutput extends AutoCloseable {
     void resume();
 
     void flush();
+
+    void close();
+
+    void stop();
 
     boolean isOpen();
 }

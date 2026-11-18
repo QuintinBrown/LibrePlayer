@@ -85,14 +85,26 @@ public class JavaSoundOutput implements AudioOutput {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+        if (line != null) {
+            try {
+                line.stop();
+                line.flush();
+                line.close();
+
+                LOGGER.info("Line closed");
+            } finally {
+                line = null;
+                paused = false;
+            }
+        }
+    }
+
+    @Override
+    public void stop() {
         if (line != null) {
             line.stop();
-            line.close();
-
-            line = null;
+            line.flush();
         }
-
-        LOGGER.info("Line closed");
     }
 }
