@@ -1,7 +1,7 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.QuintinBrown.LibrePlayer.ui.theme.ThemeAPI;
+import com.QuintinBrown.LibrePlayer.ui.theme.ThemeManager;
 
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
@@ -12,40 +12,66 @@ public class UIManager {
 
     private final Controller controller;
     private final PlayerAPI playerAPI;
+    private final ThemeManager themeManager;
+    private final ThemeAPI themeAPI;
+        
 
-    private WebView webView;
-    private WebEngine webEngine;
+    private final WebView webView;
+    private final WebEngine webEngine;
 
+    
     public UIManager() {
+
+        this.webView = new WebView();
+        this.webEngine = webView.getEngine();
+
         this.controller = new Controller();
         this.playerAPI = new PlayerAPI(controller);
-    }
 
-    public WebView createUI() {
+        this.themeManager = new ThemeManager(webEngine);
+        this.themeAPI = new ThemeAPI(themeManager);
 
-        webView = new WebView();
-        webEngine = webView.getEngine();
-
-        webEngine.getLoadWorker().stateProperty().addListener(
-            (obs, oldState, newState) -> {
-
-                if (newState == Worker.State.SUCCEEDED) {
-
-                    JSObject window = (JSObject)
-                        webEngine.executeScript("window");
-
-                    window.setMember("player", playerAPI);
-                }
-            }
+        webEngine.setOnAlert(event ->
+            System.out.println("[JavaScript Alert] " + event.getData())
         );
 
-        return webView;
+        setupJavaScriptBridge();
+
+        System.out.println("UIManager initialized");
     }
 
-    public void loadTheme(Path themeDirectory) {
-        Path htmlFile = themeDirectory.resolve("index.html");
 
-        if (!Files.exists(htmlFile)) throw new IllegalArgumentException("Theme does not contain index.html");
-        webEngine.load(htmlFile.toUri().toString());
+   private void setupJavaScriptBridge() {
+
+    webEngine.getLoadWorker().stateProperty().addListener(
+        (observable, oldState, newState) -> {
+
+            if (newState == Worker.State.SUCCEEDED) {
+
+                System.out.println("Registering JavaScript bridge");
+
+                JSObject window = (JSObject)
+                    webEngine.executeScript("window");
+
+                window.setMember("player", playerAPI);
+                window.setMember("themes", themeAPI);
+
+                System.out.println("Player API registered");
+
+                Object result = webEngine.executeScript(
+                    "typeof window.player"
+                );
+
+                System.out.println("Player API type: " + result);
+            }
+        });
     }
+
+    public WebView getWebView(){return webView;}
+
+    public Controller getController(){return controller;}
+
+    public ThemeManager getThemeManager(){return themeManager;}
+
+    public WebEngine getWebEngine(){return webEngine;}
 }
