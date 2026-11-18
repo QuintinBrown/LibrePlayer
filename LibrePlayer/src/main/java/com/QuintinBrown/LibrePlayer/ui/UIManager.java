@@ -1,5 +1,8 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.QuintinBrown.LibrePlayer.ui.theme.ThemeAPI;
 import com.QuintinBrown.LibrePlayer.ui.theme.ThemeManager;
 
@@ -23,13 +26,14 @@ public class UIManager {
     private final LibraryController libraryController;
     private final LibraryAPI libraryAPI;
 
+    private Logger logger = LoggerFactory.getLogger(UIManager.class);
     
-    public UIManager(Stage stage) {
+    public UIManager(Stage stage, Controller controller) {
 
         this.webView = new WebView();
         this.webEngine = webView.getEngine();
 
-        this.controller = new Controller();
+        this.controller = controller;
         this.playerAPI = new PlayerAPI(controller);
 
         this.themeManager = new ThemeManager(webEngine);
@@ -39,12 +43,12 @@ public class UIManager {
         this.libraryAPI = new LibraryAPI(libraryController);
 
         webEngine.setOnAlert(event ->
-            System.out.println("[JavaScript Alert] " + event.getData())
+            logger.info("[JavaScript Alert] " + event.getData())
         );
 
         setupJavaScriptBridge();
 
-        System.out.println("UIManager initialized");
+        logger.info("UIManager initialized");
     }
 
 
@@ -55,7 +59,7 @@ public class UIManager {
 
             if (newState == Worker.State.SUCCEEDED) {
 
-                System.out.println("Registering JavaScript bridge");
+                logger.info("Registering JavaScript bridge");
 
                 JSObject window = (JSObject)
                     webEngine.executeScript("window");
@@ -64,8 +68,8 @@ public class UIManager {
                 window.setMember("themes", themeAPI);
                 window.setMember("library", libraryAPI);
 
-                System.out.println("Player API registered");
-                System.out.println("Library API registered");
+                logger.info("Player API registered");
+                logger.info("Library API registered");
 
                 Object result = webEngine.executeScript(
                     "typeof window.player"
@@ -75,9 +79,9 @@ public class UIManager {
                     "typeof window.library.importMusic"
                 );
 
-                System.out.println("importMusic method type: " + result2);
+                logger.info("importMusic method type: " + result2);
 
-                System.out.println("Player API type: " + result);
+                logger.info("Player API type: " + result);
             }
         });
     }

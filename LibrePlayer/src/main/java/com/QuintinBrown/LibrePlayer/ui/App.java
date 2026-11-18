@@ -14,12 +14,15 @@ public class App extends Application {
             LoggerFactory.getLogger(App.class);
 
     private UIManager uiManager;
+    private Controller controller;
 
     @Override
     public void start(Stage stage) {
 
         try {
-            uiManager = new UIManager(stage);
+            controller = new Controller();
+
+            uiManager = new UIManager(stage, controller);
 
             Scene scene = new Scene(
                 uiManager.getWebView(),
@@ -38,6 +41,15 @@ public class App extends Application {
 
         } catch (Exception e) {
             LOGGER.error("Error initializing UI", e);
+        }
+    }
+
+    @Override
+    public void stop() {
+        LOGGER.info("Application shutting down");
+
+        if (controller != null) {
+            controller.shutdown();
         }
     }
 }
