@@ -3,6 +3,7 @@ package com.QuintinBrown.LibrePlayer.ui.theme;
 import java.io.IOException;
 
 public class ThemeAPI {
+
     private final ThemeManager themeManager;
 
     public ThemeAPI(ThemeManager themeManager) {
