@@ -19,7 +19,7 @@ public class App extends Application {
     public void start(Stage stage) {
 
         try {
-            uiManager = new UIManager();
+            uiManager = new UIManager(stage);
 
             Scene scene = new Scene(
                 uiManager.getWebView(),
