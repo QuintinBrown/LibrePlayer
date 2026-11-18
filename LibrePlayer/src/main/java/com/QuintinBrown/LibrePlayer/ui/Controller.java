@@ -22,7 +22,7 @@ public class Controller {
         this.importManager = new ImportManager(database);
     }
 
-    public void open() {
+    public void openFile() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open Audio File");
 
@@ -49,7 +49,7 @@ public class Controller {
         }
     }
 
-    public void importMusic() {
+    public String importMusic() {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Music Folder");
 
@@ -57,7 +57,11 @@ public class Controller {
 
         if (folder != null) {
             importManager.importLibrary(folder.toPath());
+        } else {
+            return null;
         }
+
+        return folder.getAbsolutePath();
     }
 
     public Player getPlayer() {
