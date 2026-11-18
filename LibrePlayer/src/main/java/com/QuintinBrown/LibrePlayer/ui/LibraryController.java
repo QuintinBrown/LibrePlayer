@@ -27,20 +27,20 @@ public class LibraryController {
     }
 
     public void chooseMusicFolder() {
-        System.out.println("Opening directory chooser");
+        LOGGER.info("Opening directory chooser");
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Music Folder");
 
         File selectedFolder = chooser.showDialog(owner);
 
-        System.out.println("Directory chooser returned");
+        LOGGER.info("Directory chooser returned");
 
         if (selectedFolder == null) {
-            System.out.println("No folder selected");
+            LOGGER.info("No folder selected");
             return;
         }
 
-        System.out.println("Selected folder: " + selectedFolder);
+        LOGGER.info("Selected folder: " + selectedFolder);
 
         Path musicDirectory = selectedFolder.toPath();
         
