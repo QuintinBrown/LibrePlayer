@@ -26,6 +26,7 @@ public class DatabaseManager {
 
 
     public static void openConnection() {
+        LOGGER.info("Attempting to start connection");
         if (conn != null) {
             return;
         }
@@ -98,11 +99,16 @@ public class DatabaseManager {
     }
 
     public static void initializeDB() {
+        LOGGER.info("Attempting to initialize database");
         if (conn == null) {
             openConnection();
         }
 
         try (InputStream in = DatabaseManager.class.getResourceAsStream("/schema.sql")) {
+            if (in == null) {
+                throw new IllegalStateException("Could not find schema.sql");
+            }
+
             String schema = new String(in.readAllBytes(), StandardCharsets.UTF_8);
 
             String[] statements = schema.split(";");
@@ -118,6 +124,7 @@ public class DatabaseManager {
                 
             } catch (SQLException e) {
                 LOGGER.error("Failed to initialize DB " + e);
+                throw new RuntimeException("Database schema initialization failed", e);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to read schema file " + e);
