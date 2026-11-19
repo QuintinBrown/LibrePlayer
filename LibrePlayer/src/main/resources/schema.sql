@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS song (
 
 CREATE TABLE IF NOT EXISTS artist (
     id INTEGER PRIMARY KEY,
-    name TEXT,
+    name TEXT UNIQUE,
     profile_photo_path TEXT,
     description TEXT,
     logo_photo_path TEXT
