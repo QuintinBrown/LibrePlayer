@@ -22,7 +22,7 @@ public class MetadataExtractor {
 
         String albumName = null;
         String releaseDate = "";
-        List<String> artists = null;
+        List<String> artists = new ArrayList<>();
         List<String> genres = null;
 
         int totalLength = 0;
@@ -44,8 +44,12 @@ public class MetadataExtractor {
                     albumName = tag.getFirst(FieldKey.ALBUM);
                 }
 
-                if (artists == null) {
+                if (artists == null || artists.isEmpty()) {
                     artists = tag.getAll(FieldKey.ALBUM_ARTISTS);
+
+                    if (artists.isEmpty()) {
+                        artists = tag.getAll(FieldKey.ARTIST);
+                    }
                 }
 
                 if (genres == null) {
