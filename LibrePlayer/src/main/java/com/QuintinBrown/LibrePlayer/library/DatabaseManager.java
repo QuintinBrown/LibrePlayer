@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -281,7 +282,7 @@ public class DatabaseManager {
         }
     }
 
-    public long insertAlbum(AlbumMetadata album) {
+    public long insertAlbum(AlbumExtractionMetadata album) {
 
         if (conn == null) {
             openConnection();
@@ -375,6 +376,152 @@ public class DatabaseManager {
 
         } catch (SQLException e) {
             LOGGER.error("Failed to insert album {}", album.getFolderPath(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public TrackMetadata getTrack(long id) {
+        String select_sql = """
+            SELECT *
+            from song
+            WHERE id = ?
+                """;
+
+        String select_artists = """
+            SELECT artist.name
+            FROM artist
+            JOIN artist_song on artist_song.artist_id = artist.id
+            WHERE artist_song.song_id = ?;
+                """;
+
+        try (PreparedStatement select_sql_stmt = conn.prepareStatement(select_sql);
+             PreparedStatement select_artists_stmt = conn.prepareStatement(select_artists)) {
+
+            select_artists_stmt.setLong(1, id);
+            select_sql_stmt.setLong(1, id);
+
+            try (ResultSet rs = select_sql_stmt.executeQuery()) {
+
+                List<String> artists = new ArrayList<>();
+                try (ResultSet artists_rs = select_artists_stmt.executeQuery()) {
+                    while (artists_rs.next()) {
+                        artists.add(artists_rs.getString("name"));
+                    }
+                }
+
+                if (rs.next()) {
+                    TrackMetadata track = new TrackMetadata(rs.getString("name"), Paths.get(rs.getString("filepath")), rs.getInt("length"), rs.getInt("track_number"), rs.getInt("disc_number"), rs.getInt("channels"), rs.getInt("sample_rate"), rs.getInt("bitrate"), rs.getString("codec"), artists, null);
+                    return track;
+                } else {
+                    throw new SQLException("Could not find track with id: " + id);
+                }
+            }
+                
+        } catch (SQLException e) {
+            LOGGER.error("Failed to return track {}", id, e);
+            throw new RuntimeException(e);    
+        }
+    }
+
+    public AlbumMetadata getAlbum(long albumID) {
+        String select_sql = """
+            SELECT *
+            from album
+            WHERE id = ?
+                """;
+
+        String select_artists = """
+            SELECT artist.name
+            FROM artist
+            JOIN album_artist on album_artist.artist_id = artist.id
+            WHERE album_artist.album_id = ?
+                """;
+
+        String select_tracks = """
+            SELECT id
+            FROM song
+            WHERE album_id = ?
+                """;
+
+        try (PreparedStatement select_sql_stmt = conn.prepareStatement(select_sql);
+             PreparedStatement select_artists_stmt = conn.prepareStatement(select_artists);
+             PreparedStatement select_tracks_stmt = conn.prepareStatement(select_tracks)) {
+
+            select_artists_stmt.setLong(1, albumID);
+            select_sql_stmt.setLong(1, albumID);
+            select_tracks_stmt.setLong(1, albumID);
+
+            try (ResultSet rs = select_sql_stmt.executeQuery()) {
+
+                List<String> artists = new ArrayList<>();
+                try (ResultSet artists_rs = select_artists_stmt.executeQuery()) {
+                    while (artists_rs.next()) {
+                        artists.add(artists_rs.getString("name"));
+                    }
+                }
+
+                List<Long> tracks = new ArrayList<>();
+                try (ResultSet tracks_rs = select_tracks_stmt.executeQuery()) {
+                    while (tracks_rs.next()) {
+                        tracks.add(tracks_rs.getLong("id"));
+                    }
+                }
+
+                if (rs.next()) {
+                    AlbumMetadata album = new AlbumMetadata(rs.getString("name"), Paths.get(rs.getString("folder_path")), Paths.get(rs.getString("cover_path")), rs.getString("release_date"), rs.getInt("length"), rs.getInt("discs"), tracks, artists, null);
+                    return album;
+                } else {
+                    throw new SQLException("Could not find album with id: " + albumID);
+                }
+            }
+                
+        } catch (SQLException e) {
+            LOGGER.error("Failed to return tracks from {}", albumID, e);
+            throw new RuntimeException(e);    
+        }
+    }
+
+    public List<TrackMetadata> getTracksFromAlbum(long albumID) {
+        String select_sql = """
+            SELECT id
+            FROM song
+            WHERE song.album_id = ?
+                """;
+
+        try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
+            select_stmt.setLong(1, albumID);
+
+            List<TrackMetadata> tracks = new ArrayList<>();
+            try (ResultSet rs = select_stmt.executeQuery()) {
+                while (rs.next()) {
+                    TrackMetadata track = getTrack(rs.getLong("id"));
+                    tracks.add(track);
+                }
+                return tracks;
+            }
+        } catch (SQLException e) {
+            LOGGER.error("Failed to return tracks from album: ", albumID, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<AlbumMetadata> getAllAlbums() {
+        String select_sql = """
+            SELECT id
+            FROM album
+                """;
+
+        try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
+            List<AlbumMetadata> albums = new ArrayList<>();
+            try (ResultSet rs = select_stmt.executeQuery()) {
+                while (rs.next()) {
+                    AlbumMetadata album = getAlbum(rs.getLong("id"));
+                    albums.add(album);
+                }
+                return albums;
+            }
+        } catch (SQLException e) {
+            LOGGER.error("Failed to retrieve albums");
             throw new RuntimeException(e);
         }
     }
