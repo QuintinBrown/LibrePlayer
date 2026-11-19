@@ -48,8 +48,18 @@ public class MetadataExtractor {
                     artists = tag.getAll(FieldKey.ALBUM_ARTISTS);
 
                     if (artists.isEmpty()) {
-                        artists = tag.getAll(FieldKey.ARTIST);
+                        artists = tag.getAll(FieldKey.ALBUM_ARTIST);
                     }
+
+                    if (artists == null || artists.isEmpty()) {
+                        String artist = tag.getFirst(FieldKey.ARTIST);
+
+                        if (artist != null && !artist.isBlank()) {
+                            artists = new ArrayList<>();
+                            artists.add(artist);
+                        }
+                    }
+
                 }
 
                 if (genres == null) {
