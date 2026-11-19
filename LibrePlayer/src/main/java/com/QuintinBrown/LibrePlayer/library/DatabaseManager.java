@@ -13,6 +13,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,6 @@ public class DatabaseManager {
     private static final String URL = "jdbc:sqlite:" + DB_PATH.toAbsolutePath();
 
     private static Connection conn;
-
 
     public static void openConnection() {
         LOGGER.info("Attempting to start connection");
@@ -66,9 +67,6 @@ public class DatabaseManager {
     }
 
     public void commit() {
-        if (conn == null) {
-            openConnection();
-        }
 
         try {
             conn.commit();
@@ -76,21 +74,13 @@ public class DatabaseManager {
             LOGGER.debug("Transaction committed.");
         } catch (SQLException e) {
             LOGGER.error("Failed to commit transaction.", e);
-
-            rollback();
         }
     }
 
     public void rollback() {
-        if (conn == null) {
-            openConnection();
-        }
 
         try {
             conn.rollback();
-            if (conn.getAutoCommit() == false) {
-                conn.setAutoCommit(true);
-            }
             LOGGER.debug("Transaction rolled back");
         } catch (SQLException e) {
             LOGGER.error("Failed to rollback transaction" + e);
@@ -228,7 +218,7 @@ public class DatabaseManager {
             openConnection();
         }
 
-        String sql = """
+        String album_sql = """
             INSERT INTO album (
                 name,
                 folder_path,
@@ -240,7 +230,7 @@ public class DatabaseManager {
             VALUES (?, ?, ?, ?, ?, ?)
             """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(album_sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, album.getName());
             stmt.setString(2, album.getFolderPath().toString());
@@ -257,13 +247,61 @@ public class DatabaseManager {
 
             stmt.executeUpdate();
 
+            long album_id = -1;
+
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return keys.getLong(1);
+                    album_id = keys.getLong(1);
                 }
             }
 
-            throw new SQLException("No album ID returned.");
+            if (album_id == -1) {
+                throw new SQLException("No album ID returned.");
+            }
+
+            String artist_sql = """
+            INSERT INTO artist (
+                name
+            )
+            VALUES (?)
+            """;
+        
+        List<Long> artist_ids = new ArrayList<>();
+
+        try (PreparedStatement artist_stmt = conn.prepareStatement(artist_sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            LOGGER.info("Album artists: {}", album.getAlbumArtists());
+            for (String artist : album.getAlbumArtists()) {
+                LOGGER.info("Inserting artist: {}", artist);
+                artist_stmt.setString(1, artist);
+
+                artist_stmt.executeUpdate();
+
+                try (ResultSet keys = artist_stmt.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        artist_ids.add(keys.getLong(1));
+                    }
+                }
+            }
+        }
+
+        String album_artist = """
+                INSERT INTO album_artist (
+                    album_id,
+                    artist_id
+                )
+                VALUES (?, ?)
+                """;
+        
+        try (PreparedStatement album_artist_stmt = conn.prepareStatement(album_artist)) {
+            for (long artist_id : artist_ids) {
+                album_artist_stmt.setLong(1, album_id);
+                album_artist_stmt.setLong(2, artist_id);
+                album_artist_stmt.executeUpdate();
+            }
+        }
+
+        return album_id;
 
         } catch (SQLException e) {
             LOGGER.error("Failed to insert album {}", album.getFolderPath(), e);
