@@ -111,6 +111,8 @@ public class DatabaseManager {
                         stmt.executeUpdate(statement);
                     }
                 }
+
+                conn.commit();
                 
             } catch (SQLException e) {
                 LOGGER.error("Failed to initialize DB " + e);
@@ -119,6 +121,8 @@ public class DatabaseManager {
         } catch (IOException e) {
             LOGGER.error("Failed to read schema file " + e);
         }
+
+        LOGGER.info("Database created");
     }
 
     public void close() {
@@ -164,7 +168,7 @@ public class DatabaseManager {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, track.getTitle());
             stmt.setInt(2, track.getLengthSeconds());
@@ -198,13 +202,78 @@ public class DatabaseManager {
 
             stmt.executeUpdate();
 
+            long track_id = -1;
+
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return keys.getLong(1);
+                    track_id = keys.getLong(1);
                 }
             }
 
-            throw new SQLException("No track ID returned.");
+            if (track_id == -1) {
+                throw new SQLException("No track ID returned");
+            }
+
+            String artist_sql = """
+            INSERT INTO artist (
+                name
+            )
+            VALUES (?)
+            ON CONFLICT(name) DO NOTHING
+                """;
+
+            String artist_select = """
+                    SELECT id
+                    from artist
+                    WHERE name = ?
+                    """;
+
+            List<Long> artist_ids = new ArrayList<>();
+
+            try (PreparedStatement artist_stmt = conn.prepareStatement(artist_sql);
+                 PreparedStatement artist_select_stmt = conn.prepareStatement(artist_select)) {
+
+            LOGGER.info("Track artists: {}", track.getArtists());
+
+            for (String artist : track.getArtists()) {
+                if (artist == null || artist.isBlank()) {
+                    continue;
+                }
+
+                LOGGER.info("Inserting artist: {}", artist);
+                artist_stmt.setString(1, artist);
+                artist_stmt.executeUpdate();
+
+                artist_select_stmt.setString(1, artist);
+
+                try (ResultSet rs = artist_select_stmt.executeQuery()) {
+                    if (rs.next()) {
+                        artist_ids.add(rs.getLong("id"));
+                    } else {
+                        throw new SQLException("Could not retrieve artist ID");
+                    }
+                }
+            }
+        }
+
+        String artist_song = """
+                INSERT OR IGNORE INTO artist_song (
+                    artist_id,
+                    song_id
+                )
+                VALUES (?, ?)
+                """;
+        
+        try (PreparedStatement artist_song_stmt = conn.prepareStatement(artist_song)) {
+            for (long artist_id : artist_ids) {
+                artist_song_stmt.setLong(1, artist_id);
+                artist_song_stmt.setLong(2, track_id);
+                artist_song_stmt.executeUpdate();
+            }
+        }
+
+
+        return track_id;
 
         } catch (IOException | SQLException e) {
             LOGGER.error("Failed to insert track {}", track.getFilePath(), e);
@@ -264,6 +333,7 @@ public class DatabaseManager {
                 name
             )
             VALUES (?)
+            ON CONFLICT(name) DO NOTHING
             """;
         
         List<Long> artist_ids = new ArrayList<>();
@@ -286,7 +356,7 @@ public class DatabaseManager {
         }
 
         String album_artist = """
-                INSERT INTO album_artist (
+                INSERT OR IGNORE INTO album_artist (
                     album_id,
                     artist_id
                 )
