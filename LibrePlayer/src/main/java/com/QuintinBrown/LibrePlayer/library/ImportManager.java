@@ -22,7 +22,7 @@ public class ImportManager {
     private void importAlbum(AlbumFolder folder) {
         LOGGER.info("Importing album from " + folder.getFolder());
 
-        AlbumMetadata album = extractor.extractAlbum(folder);
+        AlbumExtractionMetadata album = extractor.extractAlbum(folder);
 
         database.beginTransaction();
 
