@@ -16,7 +16,7 @@ public class MetadataExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataExtractor.class);
 
      
-    public AlbumMetadata extractAlbum(AlbumFolder folder) {
+    public AlbumExtractionMetadata extractAlbum(AlbumFolder folder) {
 
         List<TrackMetadata> tracks = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class MetadataExtractor {
             albumName = folder.getFolder().getFileName().toString();
         }
 
-        return new AlbumMetadata(
+        return new AlbumExtractionMetadata(
                 albumName,
                 folder.getFolder(),
                 folder.getCoverPath(),
