@@ -13,7 +13,7 @@ public class AlbumMetadata {
     private final List<String> albumArtists;
     private final List<String> genres;
 
-    private final List<TrackMetadata> tracks;
+    private final List<Long> tracks;
 
     public AlbumMetadata(
             String name,
@@ -22,7 +22,7 @@ public class AlbumMetadata {
             String releaseDate,
             int lengthSeconds,
             int discCount,
-            List<TrackMetadata> tracks,
+            List<Long> tracks,
             List<String> albumArtists,
             List<String> genres) {
 
@@ -43,7 +43,7 @@ public class AlbumMetadata {
     public String getReleaseDate(){return releaseDate;}
     public int getLengthSeconds(){return lengthSeconds;}
     public int getDiscCount(){return discCount;}
-    public List<TrackMetadata> getTracks(){return tracks;}
+    public List<Long> getTracks(){return tracks;}
     public List<String> getAlbumArtists(){return albumArtists;}
     public List<String> getGenres(){return genres;}
 }
