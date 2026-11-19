@@ -31,13 +31,13 @@ public class ImportManager {
 
             for (TrackMetadata track : album.getTracks()) {
                 long trackID = database.insertTrack(albumID, track);
-
-                database.commit();
-
-                LOGGER.info("Imported album " + album.getName());
             }
+
+            database.commit();
+            LOGGER.info("Imported album " + album.getName());
+
         } catch (Exception e) {
-            LOGGER.error("Rolling back album " + album.getName());
+            LOGGER.error("Rolling back album " + album.getName(), e);
 
             database.rollback();
 
