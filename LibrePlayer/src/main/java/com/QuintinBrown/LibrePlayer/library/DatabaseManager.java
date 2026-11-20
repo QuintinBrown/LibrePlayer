@@ -553,4 +553,28 @@ public class DatabaseManager {
             throw new RuntimeException(e);
         }
     }
+
+    public int getTrackCount(Long albumID) {
+        String count_sql = """
+            SELECT COUNT(ID) AS track_count
+            FROM song
+            WHERE album_id = ?
+            """;
+
+        try (PreparedStatement count_stmt = conn.prepareStatement(count_sql)) {
+
+            count_stmt.setLong(1, albumID);
+
+            try (ResultSet rs = count_stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("track_count");
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            LOGGER.error("Failed to retrieve track count for album {}", albumID, e);
+            throw new RuntimeException(e);
+        }
+    }
 }
