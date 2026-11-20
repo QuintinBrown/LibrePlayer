@@ -1,11 +1,16 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
 import java.io.File;
+import java.nio.file.Paths;
+import java.util.List;
 
+import com.QuintinBrown.LibrePlayer.library.AlbumMetadata;
 import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
 import com.QuintinBrown.LibrePlayer.library.ImportManager;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -14,11 +19,11 @@ public class Controller {
 
     private final Player PLAYER;
     private final ImportManager importManager;
+    private final DatabaseManager database = new DatabaseManager();
 
     public Controller() {
-        DatabaseManager database = new DatabaseManager();
-
-        this.PLAYER = new Player();
+        
+        this.PLAYER = new Player(database);
         this.importManager = new ImportManager(database);
     }
 
