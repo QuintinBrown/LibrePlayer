@@ -39,7 +39,7 @@ public class TrackMetadata {
         this.bitrate = bitrate;
         this.codec = codec;
         this.artists = List.copyOf(artists);
-        this.genres = List.copyOf(genres);
+        this.genres = genres;
     }
 
     public String getTitle(){return title;}
