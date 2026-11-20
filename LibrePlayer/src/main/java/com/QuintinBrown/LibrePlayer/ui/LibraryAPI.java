@@ -17,4 +17,9 @@ public class LibraryAPI {
         logger.info("LibraryAPI: chooseMusicFolder called");
         libraryController.chooseMusicFolder();
     }
+
+    public String getAlbums() {
+        logger.info("Library API: getAlbums called");
+        return libraryController.getAlbums();
+    }
 }
