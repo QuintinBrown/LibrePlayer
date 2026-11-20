@@ -15,7 +15,9 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -381,6 +383,7 @@ public class DatabaseManager {
     }
 
     public TrackMetadata getTrack(long id) {
+        LOGGER.info("Starting track lookup for track: {}", id);
         String select_sql = """
             SELECT *
             from song
@@ -397,20 +400,41 @@ public class DatabaseManager {
         try (PreparedStatement select_sql_stmt = conn.prepareStatement(select_sql);
              PreparedStatement select_artists_stmt = conn.prepareStatement(select_artists)) {
 
+            LOGGER.info("getTrack: Prepared statement created");
+
             select_artists_stmt.setLong(1, id);
             select_sql_stmt.setLong(1, id);
 
+            LOGGER.info("getTrack: parameters assigned");
+
             try (ResultSet rs = select_sql_stmt.executeQuery()) {
+
+                LOGGER.info("getTrack: Song query executed");
 
                 List<String> artists = new ArrayList<>();
                 try (ResultSet artists_rs = select_artists_stmt.executeQuery()) {
+                    LOGGER.info("getTrack: Artist query executed");
                     while (artists_rs.next()) {
                         artists.add(artists_rs.getString("name"));
                     }
                 }
 
+                LOGGER.info("getTrack: Found {} artists", artists.size());
+
                 if (rs.next()) {
-                    TrackMetadata track = new TrackMetadata(rs.getString("name"), Paths.get(rs.getString("filepath")), rs.getInt("length"), rs.getInt("track_number"), rs.getInt("disc_number"), rs.getInt("channels"), rs.getInt("sample_rate"), rs.getInt("bitrate"), rs.getString("codec"), artists, null);
+                    LOGGER.info("getTrack: Found song, constructing metadata");
+                    LOGGER.info("Title: {}", rs.getString("title"));
+                    LOGGER.info("Filepath: {}", Paths.get(rs.getString("filepath")));
+                    LOGGER.info("Length: {}", rs.getInt("length"));
+                    LOGGER.info("Track number: {}", rs.getInt("track_number"));
+                    LOGGER.info("Disc number: {}", rs.getInt("disc_number"));
+                    LOGGER.info("Channels: {}", rs.getInt("channels"));
+                    LOGGER.info("Sample rate: {}", rs.getInt("sample_rate"));
+                    LOGGER.info("Bitrate: {}", rs.getInt("bitrate"));
+                    LOGGER.info("Codec: {}", rs.getString("codec"));
+                    LOGGER.info("Artists: {}", artists);
+                    TrackMetadata track = new TrackMetadata(rs.getString("title"), Paths.get(rs.getString("filepath")), rs.getInt("length"), rs.getInt("track_number"), rs.getInt("disc_number"), rs.getInt("channels"), rs.getInt("sample_rate"), rs.getInt("bitrate"), rs.getString("codec"), artists, null);
+                    LOGGER.info("getTrack: Metadata constructed successfully");
                     return track;
                 } else {
                     throw new SQLException("Could not find track with id: " + id);
@@ -441,6 +465,7 @@ public class DatabaseManager {
             SELECT id
             FROM song
             WHERE album_id = ?
+            ORDER BY disc_number ASC, track_number ASC, id ASC
                 """;
 
         try (PreparedStatement select_sql_stmt = conn.prepareStatement(select_sql);
@@ -449,6 +474,7 @@ public class DatabaseManager {
 
             select_artists_stmt.setLong(1, albumID);
             select_sql_stmt.setLong(1, albumID);
+            LOGGER.info("Getting tracks with album ID {}", albumID);
             select_tracks_stmt.setLong(1, albumID);
 
             try (ResultSet rs = select_sql_stmt.executeQuery()) {
@@ -468,6 +494,7 @@ public class DatabaseManager {
                 }
 
                 if (rs.next()) {
+                    LOGGER.info("Database retrieved {} track IDs: {}", tracks.size(), tracks);
                     AlbumMetadata album = new AlbumMetadata(rs.getString("name"), Paths.get(rs.getString("folder_path")), Paths.get(rs.getString("cover_path")), rs.getString("release_date"), rs.getInt("length"), rs.getInt("discs"), tracks, artists, null);
                     return album;
                 } else {
@@ -486,6 +513,7 @@ public class DatabaseManager {
             SELECT id
             FROM song
             WHERE song.album_id = ?
+            ORDER BY disc_number ASC, track_number ASC, id ASC
                 """;
 
         try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
@@ -505,18 +533,18 @@ public class DatabaseManager {
         }
     }
 
-    public List<AlbumMetadata> getAllAlbums() {
+    public Map<Long, AlbumMetadata> getAllAlbums() {
         String select_sql = """
             SELECT id
             FROM album
                 """;
 
         try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
-            List<AlbumMetadata> albums = new ArrayList<>();
+            Map<Long, AlbumMetadata> albums = new HashMap<>();
             try (ResultSet rs = select_stmt.executeQuery()) {
                 while (rs.next()) {
-                    AlbumMetadata album = getAlbum(rs.getLong("id"));
-                    albums.add(album);
+                    AlbumMetadata albumData = getAlbum(rs.getLong("id"));
+                    albums.put(rs.getLong("id"), albumData);
                 }
                 return albums;
             }
