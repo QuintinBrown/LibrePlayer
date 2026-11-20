@@ -40,7 +40,7 @@ public class UIManager {
         this.themeAPI = new ThemeAPI(themeManager);
 
         this.libraryController = new LibraryController(stage);
-        this.libraryAPI = new LibraryAPI(libraryController);
+        this.libraryAPI = new LibraryAPI(libraryController, controller);
 
         webEngine.setOnAlert(event ->
             logger.info("[JavaScript Alert] " + event.getData())
