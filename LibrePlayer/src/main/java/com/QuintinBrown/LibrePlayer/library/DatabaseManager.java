@@ -508,7 +508,7 @@ public class DatabaseManager {
         }
     }
 
-    public List<TrackMetadata> getTracksFromAlbum(long albumID) {
+    public Map<Long, TrackMetadata> getTracksFromAlbum(long albumID) {
         String select_sql = """
             SELECT id
             FROM song
@@ -519,11 +519,11 @@ public class DatabaseManager {
         try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
             select_stmt.setLong(1, albumID);
 
-            List<TrackMetadata> tracks = new ArrayList<>();
+            Map<Long, TrackMetadata> tracks = new HashMap<>();
             try (ResultSet rs = select_stmt.executeQuery()) {
                 while (rs.next()) {
                     TrackMetadata track = getTrack(rs.getLong("id"));
-                    tracks.add(track);
+                    tracks.put(rs.getLong("id"), track);
                 }
                 return tracks;
             }
