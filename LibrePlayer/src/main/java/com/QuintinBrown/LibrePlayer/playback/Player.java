@@ -26,6 +26,8 @@ public class Player implements AutoCloseable {
     private volatile boolean paused;
     private volatile boolean closed;
 
+    private Runnable onTrackFinish;
+
     public Player(DatabaseManager manager) {
         this.decoder = new Decoder();
         this.buffer = new byte[8192];
@@ -34,6 +36,8 @@ public class Player implements AutoCloseable {
     }
 
     private void playbackLoop() {
+        boolean completedNaturally = false;
+
         try {
             while (running) {
                 if (paused) {
@@ -44,6 +48,7 @@ public class Player implements AutoCloseable {
                 int bytes = decoder.read(buffer);
 
                 if (bytes == -1) {
+                    completedNaturally = true;
                     break;
                 }
 
@@ -69,6 +74,14 @@ public class Player implements AutoCloseable {
             }
             
             LOGGER.info("Playback thread terminated");
+
+            if (completedNaturally && onTrackFinish != null) {
+                try {
+                    onTrackFinish.run();
+                } catch (Exception e) {
+                    LOGGER.error("Error handling track completion", e);
+                }
+            }
         }
     }
 
@@ -85,13 +98,21 @@ public class Player implements AutoCloseable {
     }
 
     public void open(Long trackID) {
+        LOGGER.info("Attempting to open track with id: {}", trackID);
+
+        LOGGER.info("Calling manager.getTrack()");
         TrackMetadata track = manager.getTrack(trackID);
+        LOGGER.info("manager.getTrack() returned");
 
         if (track == null) {
+            LOGGER.error("No track metadata found for track: {}", trackID);
             throw new IllegalStateException("Null track metadata");
         }
 
+        LOGGER.info("Retrieved track metadata {}", track);
+
         Path path = track.getFilePath();
+        LOGGER.info("Attempting to open track at path {}", path);
 
         open(path);
     }
@@ -119,11 +140,11 @@ public class Player implements AutoCloseable {
 
         output.start();
 
+        state = PlaybackState.PLAYING;
+
         playbackThread = new Thread(this::playbackLoop, "Playback Thread");
 
         playbackThread.start();
-
-        state = PlaybackState.PLAYING;
 
         LOGGER.info("Started playback");
     }
@@ -205,6 +226,10 @@ public class Player implements AutoCloseable {
 
         state = PlaybackState.STOPPED;
         LOGGER.info("Playback stopped");
+    }
+
+    public void setOnTrackFinished(Runnable callback) {
+        this.onTrackFinish = callback;
     }
 
     public PlaybackState getState() {return state;}
