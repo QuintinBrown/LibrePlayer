@@ -5,17 +5,22 @@ import org.slf4j.LoggerFactory;
 
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class PlayerAPI {
 
     private final Controller controller;
     private final Player player;
+    private final LibraryController libraryController;
 
     private final Logger logger = LoggerFactory.getLogger(PlayerAPI.class);
 
-    public PlayerAPI(Controller controller) {
+    public PlayerAPI(Controller controller, LibraryController libraryController) {
         this.controller = controller;
         this.player = controller.getPlayer();
+        this.libraryController = libraryController;
     }
 
     // Playback controls
@@ -55,5 +60,48 @@ public class PlayerAPI {
 
     public String importMusic() {
         return controller.importMusic();
+    }
+
+    public void playTrack(String trackID) {
+
+        logger.info("LibraryAPI: playTrack called with ID {}", trackID);
+        controller.playTrack(Long.parseLong(trackID));
+    }
+
+    public Long getCurrentTrackID() {
+        return controller.getCurrentTrackID();
+    }
+
+    public String getCurrentTrackMetadata() {
+
+        Long trackID = controller.getCurrentTrackID();
+
+        if (trackID == null) {
+            logger.warn("No current track ID available");
+            return null;
+        }
+
+        String metadata = libraryController.getTrackMetadata(trackID);
+        logger.info("Current track metadata {}", metadata);
+
+        return metadata;
+    }
+
+    public String getPlaybackQueue() {
+        JsonArray queue = new JsonArray();
+
+        for (Long trackID : controller.getPlaybackQueue()) {
+            String metadata = libraryController.getTrackMetadata(trackID);
+
+            if (metadata == null) {
+                continue;
+            }
+
+            JsonObject track = JsonParser.parseString(metadata).getAsJsonObject();
+            track.addProperty("id", trackID);
+            queue.add(track);
+        }
+
+        return queue.toString();
     }
 }
