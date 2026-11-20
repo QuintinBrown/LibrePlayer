@@ -5,11 +5,16 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
+import com.QuintinBrown.LibrePlayer.library.TrackMetadata;
+
 public class Player implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Player.class);
 
     private final Decoder decoder;
     private final AudioOutput output;
+
+    private DatabaseManager manager;
 
     private Thread playbackThread;
 
@@ -21,10 +26,11 @@ public class Player implements AutoCloseable {
     private volatile boolean paused;
     private volatile boolean closed;
 
-    public Player() {
+    public Player(DatabaseManager manager) {
         this.decoder = new Decoder();
         this.buffer = new byte[8192];
         this.output = new JavaSoundOutput();
+        this.manager = manager;
     }
 
     private void playbackLoop() {
@@ -76,6 +82,18 @@ public class Player implements AutoCloseable {
         output.open(decoder.getOutputFormat());
 
         LOGGER.info("Opened file at: {}", source);
+    }
+
+    public void open(Long trackID) {
+        TrackMetadata track = manager.getTrack(trackID);
+
+        if (track == null) {
+            throw new IllegalStateException("Null track metadata");
+        }
+
+        Path path = track.getFilePath();
+
+        open(path);
     }
 
     public synchronized void play() {
