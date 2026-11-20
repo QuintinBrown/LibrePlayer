@@ -68,6 +68,18 @@ public class UIManager {
                 window.setMember("themes", themeAPI);
                 window.setMember("library", libraryAPI);
 
+                window.setMember("javaConsole", new Object() {
+
+                    public void log(String message) {
+                        System.out.println("[JS] " + message);
+                    }
+
+                    public void error(String message) {
+                        System.err.println("[JS ERROR] " + message);
+                    }
+
+                });
+
                 logger.info("Player API registered");
                 logger.info("Library API registered");
 
@@ -78,6 +90,12 @@ public class UIManager {
                 Object result2 = webEngine.executeScript(
                     "typeof window.library.importMusic"
                 );
+
+                Object result3 = webEngine.executeScript(
+                    "typeof window.library.getAlbums"
+                );
+
+                logger.info("getAlbums method type: " + result3);
 
                 logger.info("importMusic method type: " + result2);
 
