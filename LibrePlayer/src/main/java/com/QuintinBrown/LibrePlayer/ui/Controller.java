@@ -1,6 +1,7 @@
 package com.QuintinBrown.LibrePlayer.ui;
 
 import java.io.File;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.QuintinBrown.LibrePlayer.library.AlbumMetadata;
 import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
 import com.QuintinBrown.LibrePlayer.library.ImportManager;
+import com.QuintinBrown.LibrePlayer.library.TrackMetadata;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackQueue;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
@@ -22,6 +24,8 @@ public class Controller {
     private final DatabaseManager database = new DatabaseManager();
     private final PlaybackQueue playbackQueue;
     private final Logger logger = LoggerFactory.getLogger(Controller.class);
+    private PlaybackListener playbackListener;
+    private Long currentTrackID;
 
 
     public Controller() {
@@ -45,10 +49,21 @@ public class Controller {
 
     public void play() {
         PLAYER.play();
+        notifyPlaybackState();
     }
 
     public void pause() {
         PLAYER.pause();
+        notifyPlaybackState();
+    }
+
+    public void playTrack(long trackID) {
+        currentTrackID = trackID;
+        PLAYER.open(trackID);
+        PLAYER.play();
+
+        notifyTrackChanged(trackID);
+        notifyPlaybackState();
     }
 
     public void playNextTrack() {
@@ -56,12 +71,19 @@ public class Controller {
         Long trackID = playbackQueue.next();
 
         if (trackID == null) {
+            currentTrackID = null;
             PLAYER.stop();
+            notifyPlaybackState();
             return;
         }
+
+        currentTrackID = trackID;
         
         PLAYER.open(trackID);
         PLAYER.play();
+
+        notifyTrackChanged(trackID);
+        notifyPlaybackState();
     }
 
     public void playPreviousTrack() {
@@ -72,8 +94,13 @@ public class Controller {
             return;
         }
 
+        currentTrackID = trackID;
+
         PLAYER.open(trackID);
         PLAYER.play();
+
+        notifyTrackChanged(trackID);
+        notifyPlaybackState();
     }
 
     public void playAlbum(long albumID) {
@@ -100,6 +127,8 @@ public class Controller {
         } else {
             PLAYER.play();
         }
+
+        notifyPlaybackState();
     }
 
     public String importMusic() {
@@ -117,11 +146,57 @@ public class Controller {
         return folder.getAbsolutePath();
     }
 
+    private void notifyTrackChanged(long trackID) {
+
+        if (playbackListener != null) {
+            playbackListener.onTrackChanged(trackID);
+        }
+
+    }
+
+    private void notifyPlaybackState() {
+
+        if (playbackListener != null) {
+
+            PlaybackState state = PLAYER.getState();
+
+            playbackListener.onPlaybackStateChanged(
+                state == PlaybackState.PLAYING,
+                state == PlaybackState.PAUSED
+            );
+
+        }
+
+    }
+
+    public AlbumMetadata getAlbumForTrack(long trackID) {
+        return database.getAllAlbums()
+                .values()
+                .stream()
+                .filter(album -> album.getTracks().contains(trackID))
+                .findFirst()
+                .orElse(null);
+    }
+
     public void shutdown() {
         PLAYER.close();
+    } 
+
+    public void setPlaybackListener(PlaybackListener playbackListener) {
+        this.playbackListener = playbackListener;
+    }
+
+    public TrackMetadata getTrackMetadata(long trackID) {
+        return database.getTrack(trackID);
     }
 
     public Player getPlayer() {
         return PLAYER;
     }
+
+    public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}
+
+    public Long getCurrentTrackID(){return currentTrackID;}
+
+    public DatabaseManager getDatabase() {return database;}
 }

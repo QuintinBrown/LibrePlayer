@@ -2,7 +2,6 @@ package com.QuintinBrown.LibrePlayer.ui;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.QuintinBrown.LibrePlayer.library.AlbumMetadata;
 import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
 import com.QuintinBrown.LibrePlayer.library.ImportManager;
+import com.QuintinBrown.LibrePlayer.library.TrackMetadata;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -26,8 +26,7 @@ public class LibraryController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryController.class);
     
-    public LibraryController(Window owner) {
-        DatabaseManager database = new DatabaseManager();
+    public LibraryController(Window owner, DatabaseManager database) {
         this.database = database;
         this.importManager = new ImportManager(database);
         this.owner = owner;
@@ -90,5 +89,58 @@ public class LibraryController {
         }
 
         return albums.toString();
+    }
+
+    public String getAlbumTracks(long albumID) {
+        Map<Long, TrackMetadata> trackMetadataList = database.getTracksFromAlbum(albumID);
+        JsonArray tracks = new JsonArray();
+
+        for (Map.Entry<Long, TrackMetadata> trackData : trackMetadataList.entrySet()) {
+            JsonObject track = new JsonObject();
+            track.addProperty("id", trackData.getKey());
+            track.addProperty("title", trackData.getValue().getTitle());
+            track.addProperty("artists", trackData.getValue().getArtists().toString());
+            track.addProperty("trackNumber", trackData.getValue().getTrackNumber());
+            track.addProperty("duration", trackData.getValue().getLengthSeconds());
+            tracks.add(track);
+        }
+
+        return tracks.toString();
+    }
+
+    public String getTrackMetadata(long trackID) {
+
+        TrackMetadata track = database.getTrack(trackID);
+
+        if (track == null) {
+            return null;
+        }
+
+        AlbumMetadata album = database.getAllAlbums()
+                                      .values()
+                                      .stream()
+                                      .filter(a -> a.getTracks().contains(trackID))
+                                      .findFirst()
+                                      .orElse(null);
+
+        JsonObject metadata = new JsonObject();
+
+        metadata.addProperty("title", track.getTitle());
+        metadata.addProperty("artist", String.join(", ", track.getArtists()));
+
+        metadata.addProperty("album", album != null ? album.getName() : "Unknown Album");
+
+        metadata.addProperty("releaseDate",album != null ? album.getReleaseDate() : "");
+
+        metadata.addProperty(
+                "artworkPath",
+                album != null && album.getCoverPath() != null
+                        ? album.getCoverPath().toString()
+                        : null
+        );
+
+        metadata.addProperty("duration", track.getLengthSeconds());
+
+        return metadata.toString();
     }
 }
