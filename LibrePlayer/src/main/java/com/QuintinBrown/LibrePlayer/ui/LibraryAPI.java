@@ -7,10 +7,12 @@ public class LibraryAPI {
     private final LibraryController libraryController;
 
     private final Logger logger = LoggerFactory.getLogger(LibraryAPI.class);
+    private final Controller controller;
 
-    public LibraryAPI(LibraryController libraryController) {
+    public LibraryAPI(LibraryController libraryController, Controller controller) {
         this.libraryController = libraryController;
         logger.info("LibraryAPI initialized");
+        this.controller = controller;
     }
 
     public void importMusic() {
@@ -21,5 +23,10 @@ public class LibraryAPI {
     public String getAlbums() {
         logger.info("Library API: getAlbums called");
         return libraryController.getAlbums();
+    }
+
+    public void playAlbum(long albumID) {
+        logger.info("LibraryAPI: playAlbum called with ID {}", albumID);
+        controller.playAlbum(albumID);
     }
 }

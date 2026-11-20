@@ -3,6 +3,7 @@ package com.QuintinBrown.LibrePlayer.ui;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,15 +75,17 @@ public class LibraryController {
     }
 
     public String getAlbums() {
-        List<AlbumMetadata> albumMetadataList = database.getAllAlbums();
+        Map<Long, AlbumMetadata> albumMetadataList = database.getAllAlbums();
         JsonArray albums = new JsonArray();
 
-        for (AlbumMetadata albumMetadata : albumMetadataList) {
+        for (Map.Entry<Long, AlbumMetadata> albumData : albumMetadataList.entrySet()) {
             JsonObject album = new JsonObject();
-            album.addProperty("title", albumMetadata.getName());
-            album.addProperty("releaseDate", albumMetadata.getReleaseDate());
-            album.addProperty("artists", albumMetadata.getAlbumArtists().toString());
-            album.addProperty("coverPath", albumMetadata.getCoverPath().toString());
+            album.addProperty("id", albumData.getKey());
+            album.addProperty("title", albumData.getValue().getName());
+            album.addProperty("releaseDate", albumData.getValue().getReleaseDate());
+            album.addProperty("artists", albumData.getValue().getAlbumArtists().toString());
+            album.addProperty("coverPath", albumData.getValue().getCoverPath().toString());
+            album.addProperty("trackCount", database.getTrackCount(albumData.getKey()));
             albums.add(album);
         }
 
