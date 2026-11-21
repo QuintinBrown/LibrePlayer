@@ -531,9 +531,29 @@ public class DatabaseManager {
                 return tracks;
             }
         } catch (SQLException e) {
-            LOGGER.error("Failed to return tracks from album: ", albumID, e);
+            LOGGER.error("Failed to return tracks from album: {}", albumID, e);
             throw new RuntimeException(e);
         }
+    }
+
+    public AlbumMetadata getAlbumFromTrack(long trackID) {
+        String select_sql = """
+            SELECT album_id
+            FROM song
+            WHERE id = ?
+                """;
+        
+            try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
+                select_stmt.setLong(1, trackID);
+
+                try (ResultSet rs = select_stmt.executeQuery()) {
+                    AlbumMetadata album = getAlbum(rs.getLong("album_id"));
+                    return album;
+                }
+            } catch (SQLException e) {
+                    LOGGER.error("Failed to get album from track: {}", trackID, e);
+                    throw new RuntimeException(e);
+                }
     }
 
     public Map<Long, AlbumMetadata> getAllAlbums() {
