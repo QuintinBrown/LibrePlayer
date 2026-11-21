@@ -496,6 +496,7 @@ public class DatabaseManager {
                 if (rs.next()) {
                     LOGGER.info("Database retrieved {} track IDs: {}", tracks.size(), tracks);
                     AlbumMetadata album = new AlbumMetadata(rs.getString("name"), Paths.get(rs.getString("folder_path")), Paths.get(rs.getString("cover_path")), rs.getString("release_date"), rs.getInt("length"), rs.getInt("discs"), tracks, artists, null);
+                    LOGGER.info("getAlbums() is returning AlbumMetadata");
                     return album;
                 } else {
                     throw new SQLException("Could not find album with id: " + albumID);
@@ -557,6 +558,8 @@ public class DatabaseManager {
             LOGGER.info("Retrieving metadata for album with id {}", albumID);
 
             AlbumMetadata albumData = getAlbum(albumID);
+
+            LOGGER.info("AFTER getAlbum({})", albumID);
             albums.put(albumID, albumData);
         }
 
