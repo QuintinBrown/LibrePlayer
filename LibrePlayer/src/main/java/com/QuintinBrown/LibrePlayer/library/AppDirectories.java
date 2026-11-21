@@ -18,24 +18,32 @@ public class AppDirectories {
     private static final Path DATABASE = ROOT.resolve("database");
 
     private static Path getApplicationDirectory() {
+
+        logger.info("Portable mode: {}", Boolean.getBoolean("app.portable"));
+        logger.info("Application root: {}", ROOT);
+        logger.info("Executable: {}", ProcessHandle.current().info().command().orElse("Unknown"));
+
+        if (Boolean.getBoolean("app.portable")) {
+            String executable = ProcessHandle.current().info().command().orElseThrow(() -> 
+                                                                            new IllegalStateException("Unable to locate app executable"));
+                    
+            return Paths.get(executable).toAbsolutePath().getParent();
+        }
+
+        // JAR execution
         try {
-            Path location = Paths.get(
-                AppDirectories.class
-                    .getProtectionDomain()
-                    .getCodeSource()
-                    .getLocation()
-                    .toURI()
-            );
+            Path location = Paths.get(AppDirectories.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
             if (Files.isRegularFile(location)) {
                 return location.getParent();
             }
 
-            return location;
-
         } catch (URISyntaxException e) {
             throw new RuntimeException("Unable to determine application directory", e);
         }
+
+        // Fallback to current working directory
+        return Paths.get("").toAbsolutePath();
     }
 
     public static void initialize() throws IOException {
