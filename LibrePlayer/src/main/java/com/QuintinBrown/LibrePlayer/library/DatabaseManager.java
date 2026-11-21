@@ -539,19 +539,28 @@ public class DatabaseManager {
             FROM album
                 """;
 
-        try (PreparedStatement select_stmt = conn.prepareStatement(select_sql)) {
-            Map<Long, AlbumMetadata> albums = new HashMap<>();
-            try (ResultSet rs = select_stmt.executeQuery()) {
+        List<Long> albumIDs = new ArrayList<>();
+
+        try (PreparedStatement select_stmt = conn.prepareStatement(select_sql);
+             ResultSet rs = select_stmt.executeQuery()) {
                 while (rs.next()) {
-                    AlbumMetadata albumData = getAlbum(rs.getLong("id"));
-                    albums.put(rs.getLong("id"), albumData);
+                    albumIDs.add(rs.getLong("id"));
                 }
-                return albums;
-            }
+
         } catch (SQLException e) {
-            LOGGER.error("Failed to retrieve albums");
+            LOGGER.error("Failed to retrieve album IDs, {}", e);
             throw new RuntimeException(e);
         }
+
+        Map<Long, AlbumMetadata> albums = new HashMap<>();
+        for (Long albumID : albumIDs) {
+            LOGGER.info("Retrieving metadata for album with id {}", albumID);
+
+            AlbumMetadata albumData = getAlbum(albumID);
+            albums.put(albumID, albumData);
+        }
+
+        return albums;
     }
 
     public int getTrackCount(Long albumID) {
