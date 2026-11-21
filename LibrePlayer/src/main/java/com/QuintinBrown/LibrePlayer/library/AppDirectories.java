@@ -20,14 +20,23 @@ public class AppDirectories {
     private static Path getApplicationDirectory() {
 
         logger.info("Portable mode: {}", Boolean.getBoolean("app.portable"));
-        logger.info("Application root: {}", ROOT);
         logger.info("Executable: {}", ProcessHandle.current().info().command().orElse("Unknown"));
 
-        if (Boolean.getBoolean("app.portable")) {
-            String executable = ProcessHandle.current().info().command().orElseThrow(() -> 
+        String executable = ProcessHandle.current().info().command().orElseThrow(() -> 
                                                                             new IllegalStateException("Unable to locate app executable"));
+
+        if (Boolean.getBoolean("app.portable")) {
+            if (executable.equals("Unknown")) {
+                throw new IllegalStateException("Unable to locate app executable");
+            }
                     
-            return Paths.get(executable).toAbsolutePath().getParent();
+            Path executablePath = Paths.get(executable).toAbsolutePath();
+
+            Path directory = executablePath.getParent();
+
+            logger.info("Application root: {}", directory);
+
+            return directory;
         }
 
         // JAR execution
