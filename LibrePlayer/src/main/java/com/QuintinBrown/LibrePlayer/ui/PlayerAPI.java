@@ -31,14 +31,17 @@ public class PlayerAPI {
     }
 
     public void play() {
+        logger.info("PlayerAPI: play called");
         controller.play();
     }
 
     public void pause() {
+        logger.info("PlayerAPI: pause called");
         controller.pause();
     }
 
     public void togglePlayPause() {
+        logger.info("PlayerAPI: togglePlayPause called");
         controller.togglePlayPause();
     }
     
