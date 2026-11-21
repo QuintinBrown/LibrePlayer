@@ -34,7 +34,7 @@ public class AlbumMetadata {
         this.discCount = discCount;
         this.tracks = List.copyOf(tracks);
         this.albumArtists = List.copyOf(albumArtists);
-        this.genres = List.copyOf(genres);
+        this.genres = genres == null ? List.of() : List.copyOf(genres);
     }
 
     public String getName(){return name;}
