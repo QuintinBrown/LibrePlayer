@@ -22,7 +22,15 @@ public class LibraryAPI {
 
     public String getAlbums() {
         logger.info("Library API: getAlbums called");
-        return libraryController.getAlbums();
+
+        try {
+            String result = libraryController.getAlbums();
+            logger.info("Library API: getAlbums returned successfully");
+            return result;
+        } catch (Exception e) {
+            logger.error("Library API: getAlbums failed", e);
+            throw e;
+        }
     }
 
     public String getAlbumTracks(long albumID) {
