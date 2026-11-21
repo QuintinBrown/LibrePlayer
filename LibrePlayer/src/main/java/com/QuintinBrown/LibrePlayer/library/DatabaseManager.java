@@ -331,32 +331,43 @@ public class DatabaseManager {
                 throw new SQLException("No album ID returned.");
             }
 
-            String artist_sql = """
-            INSERT INTO artist (
-                name
-            )
-            VALUES (?)
-            ON CONFLICT(name) DO NOTHING
-            """;
+        String artist_sql = """
+                INSERT INTO ARTIST (name)
+                VALUES (?)
+                ON CONFLICT(name) DO NOTHING
+                """;
+        
+        String select_artist_sql = """
+                SELECT id
+                FROM artist
+                WHERE name = ?
+                """;
         
         List<Long> artist_ids = new ArrayList<>();
 
-        try (PreparedStatement artist_stmt = conn.prepareStatement(artist_sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement insert_stmt = conn.prepareStatement(artist_sql);
+             PreparedStatement select_stmt = conn.prepareStatement(select_artist_sql)) {
+                for (String artist : album.getAlbumArtists()) {
+                    if (artist == null || artist.isBlank()) {
+                        continue;
+                    }
 
-            LOGGER.info("Album artists: {}", album.getAlbumArtists());
-            for (String artist : album.getAlbumArtists()) {
-                LOGGER.info("Inserting artist: {}", artist);
-                artist_stmt.setString(1, artist);
+                    String normalizedArtist = artist.trim();
 
-                artist_stmt.executeUpdate();
+                    insert_stmt.setString(1, normalizedArtist);
+                    insert_stmt.executeUpdate();
 
-                try (ResultSet keys = artist_stmt.getGeneratedKeys()) {
-                    if (keys.next()) {
-                        artist_ids.add(keys.getLong(1));
+                    select_stmt.setString(1, normalizedArtist);
+
+                    try (ResultSet rs = select_stmt.executeQuery()) {
+                        if (rs.next()) {
+                            artist_ids.add(rs.getLong("id"));
+                        } else {
+                            throw new SQLException("Could not retrieve artist ID for: {}", normalizedArtist);
+                        }
                     }
                 }
-            }
-        }
+             }
 
         String album_artist = """
                 INSERT OR IGNORE INTO album_artist (
