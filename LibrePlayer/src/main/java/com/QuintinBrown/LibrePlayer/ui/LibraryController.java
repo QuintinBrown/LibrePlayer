@@ -74,19 +74,30 @@ public class LibraryController {
     }
 
     public String getAlbums() {
+        LOGGER.info("Getting all albums");
         Map<Long, AlbumMetadata> albumMetadataList = database.getAllAlbums();
+        LOGGER.info("Retrieved {} albums", albumMetadataList.size());
         JsonArray albums = new JsonArray();
 
         for (Map.Entry<Long, AlbumMetadata> albumData : albumMetadataList.entrySet()) {
+            LOGGER.info("Processing album with ID: {}", albumData.getKey());
             JsonObject album = new JsonObject();
             album.addProperty("id", albumData.getKey());
             album.addProperty("title", albumData.getValue().getName());
             album.addProperty("releaseDate", albumData.getValue().getReleaseDate());
             album.addProperty("artists", albumData.getValue().getAlbumArtists().toString());
-            album.addProperty("coverPath", albumData.getValue().getCoverPath().toString());
+
+            Path coverPath = albumData.getValue().getCoverPath();
+            album.addProperty("coverPath", coverPath != null ? coverPath.toString() : "");
+
+            LOGGER.info("Getting track count for album with ID {}", albumData.getKey());
             album.addProperty("trackCount", database.getTrackCount(albumData.getKey()));
             albums.add(album);
+
+            LOGGER.info("Finished processing album {}", albumData.getKey());
         }
+
+        LOGGER.info("Serializing {} albums to JSON", albums.size());
 
         return albums.toString();
     }
