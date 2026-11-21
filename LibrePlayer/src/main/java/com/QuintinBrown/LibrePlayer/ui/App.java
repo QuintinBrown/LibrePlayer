@@ -1,6 +1,7 @@
 
 package com.QuintinBrown.LibrePlayer.ui;
 
+import org.bytedeco.ffmpeg.global.avutil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,16 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
+
+        try {
+            LOGGER.info("FFmpeg version: {}",
+                avutil.avutil_version());
+
+            LOGGER.info("FFmpeg native initialization successful");
+
+        } catch (Throwable t) {
+            LOGGER.error("FFmpeg native initialization failed", t);
+        }
 
         try {
             controller = new Controller();
