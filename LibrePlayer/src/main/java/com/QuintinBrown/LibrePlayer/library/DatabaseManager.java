@@ -495,7 +495,9 @@ public class DatabaseManager {
 
                 if (rs.next()) {
                     LOGGER.info("Database retrieved {} track IDs: {}", tracks.size(), tracks);
-                    AlbumMetadata album = new AlbumMetadata(rs.getString("name"), Paths.get(rs.getString("folder_path")), Paths.get(rs.getString("cover_path")), rs.getString("release_date"), rs.getInt("length"), rs.getInt("discs"), tracks, artists, null);
+                    String coverPathString = rs.getString("cover_path");
+                    String folderPathString = rs.getString("folder_path");
+                    AlbumMetadata album = new AlbumMetadata(rs.getString("name"), folderPathString != null ? Paths.get(folderPathString) : null, coverPathString != null ? Paths.get(coverPathString) : null, rs.getString("release_date"), rs.getInt("length"), rs.getInt("discs"), tracks, artists, null);
                     LOGGER.info("getAlbums() is returning AlbumMetadata");
                     return album;
                 } else {
