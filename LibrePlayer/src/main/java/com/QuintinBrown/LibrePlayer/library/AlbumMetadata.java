@@ -33,8 +33,8 @@ public class AlbumMetadata {
         this.lengthSeconds = lengthSeconds;
         this.discCount = discCount;
         this.tracks = List.copyOf(tracks);
-        this.albumArtists = albumArtists;
-        this.genres = genres;
+        this.albumArtists = List.copyOf(albumArtists);
+        this.genres = List.copyOf(genres);
     }
 
     public String getName(){return name;}
