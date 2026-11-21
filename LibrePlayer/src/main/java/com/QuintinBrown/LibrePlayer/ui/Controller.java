@@ -170,12 +170,7 @@ public class Controller {
     }
 
     public AlbumMetadata getAlbumForTrack(long trackID) {
-        return database.getAllAlbums()
-                .values()
-                .stream()
-                .filter(album -> album.getTracks().contains(trackID))
-                .findFirst()
-                .orElse(null);
+        return database.getAlbumFromTrack(trackID);
     }
 
     public void shutdown() {
