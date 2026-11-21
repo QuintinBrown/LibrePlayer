@@ -5,15 +5,17 @@ UI is controlled via JavaFX webview using locally hosted html, css, and js files
 Repo for themes in progress.  
 Currently still being updated, only contains basic music functionality.  
 
+Capable of playing mp3, flac, wav, ogg, opus, m4a, aac, and alac files.
+
 Portable only at the moment, folder structure:  
 LibrePlayer/  
-&ensp;/app  
-&ensp;/runtime  
-&ensp;/database  
-&emsp;library.db  
-&ensp;/logs  
-&emsp;LibrePlayer.log  
-&ensp;/themes  
-&ensp;/default  
-&emsp;index.html  
-&ensp;LibrePlayer.exe
+&ensp;&ensp;/app  
+&ensp;&ensp;/runtime  
+&ensp;&ensp;/database  
+&emsp;&emsp;library.db  
+&ensp;&ensp;/logs  
+&emsp;&emsp;LibrePlayer.log  
+&ensp;&ensp;/themes  
+&ensp;&ensp;/default  
+&emsp;&emsp;index.html  
+&ensp;&ensp;LibrePlayer.exe
