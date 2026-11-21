@@ -22,6 +22,7 @@ public class UIManager {
     private final PlayerAPI playerAPI;
     private final ThemeManager themeManager;
     private final ThemeAPI themeAPI;
+    private final Gson gson = new Gson();
         
 
     private final WebView webView;
@@ -110,6 +111,8 @@ public class UIManager {
                     "}"
                 );
 
+                initializeNowPlayingMetadata();
+
                 Object uiType = webEngine.executeScript(
                     "typeof window.librePlayerUI"
                 );
@@ -134,8 +137,6 @@ public class UIManager {
             }
         });
     }
-
-    private final Gson gson = new Gson();
 
     public void updateNowPlaying(
         String title,
@@ -189,6 +190,39 @@ public class UIManager {
 
             }
 
+        });
+    }
+
+    private void initializeNowPlayingMetadata() {
+        Platform.runLater(() -> {
+            try {
+                long trackID = controller.getCurrentTrackID();
+                if (trackID <= 0) {
+                    logger.debug("No current track to display");
+                    return;
+                }
+
+                TrackMetadata track = controller.getTrackMetadata(trackID);
+
+                if (track == null) {
+                    logger.warn("No metadata for current track: {}", trackID);
+                    return;
+                }
+
+                AlbumMetadata album = controller.getAlbumForTrack(trackID);
+
+                String title = track.getTitle();
+                String artist = String.join(", ", track.getArtists());
+
+                String albumName = album != null ? album.getName() : null;
+                String releaseDate = album != null ? album.getReleaseDate() : null;
+
+                String coverPath = album != null && album.getCoverPath() != null ? album.getCoverPath().toString() : null;
+
+                updateNowPlaying(title, artist, albumName, releaseDate, coverPath);
+            } catch (Exception e) {
+                logger.error("Failed to initialize Now Playing metadata", e);
+            }
         });
     }
 
