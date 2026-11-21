@@ -24,7 +24,7 @@ public class LibraryAPI {
         logger.info("Library API: getAlbums called");
 
         try {
-            String result = libraryController.getAlbums();
+            String result = libraryController.getAllAlbums();
             logger.info("Library API: getAlbums returned successfully");
             return result;
         } catch (Exception e) {

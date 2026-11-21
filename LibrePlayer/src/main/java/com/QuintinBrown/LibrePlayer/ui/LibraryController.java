@@ -73,7 +73,7 @@ public class LibraryController {
         thread.start();
     }
 
-    public String getAlbums() {
+    public String getAllAlbums() {
         LOGGER.info("Getting all albums");
         Map<Long, AlbumMetadata> albumMetadataList = database.getAllAlbums();
         LOGGER.info("Retrieved {} albums", albumMetadataList.size());
@@ -127,12 +127,7 @@ public class LibraryController {
             return null;
         }
 
-        AlbumMetadata album = database.getAllAlbums()
-                                      .values()
-                                      .stream()
-                                      .filter(a -> a.getTracks().contains(trackID))
-                                      .findFirst()
-                                      .orElse(null);
+        AlbumMetadata album = database.getAlbumFromTrack(trackID);
 
         JsonObject metadata = new JsonObject();
 
