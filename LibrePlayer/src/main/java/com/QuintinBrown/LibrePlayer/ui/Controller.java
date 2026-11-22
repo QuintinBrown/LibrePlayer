@@ -182,6 +182,9 @@ public class Controller {
         playbackQueue.skipToIndex(index);
         PLAYER.open(playbackQueue.getCurrentTrack());
         PLAYER.play();
+
+        notifyTrackChanged(playbackQueue.getCurrentTrack());
+        notifyPlaybackState();
     }
 
     public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}
