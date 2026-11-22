@@ -88,7 +88,7 @@ public class LibraryController {
             album.addProperty("artists", albumData.getValue().getAlbumArtists().toString());
 
             Path coverPath = albumData.getValue().getCoverPath();
-            album.addProperty("coverPath", coverPath != null ? coverPath.toString() : null);
+            album.addProperty("coverPath", coverPath != null ? coverPath.toAbsolutePath().toUri().toString() : null);
 
             LOGGER.info("Getting track count for album with ID {}", albumData.getKey());
             album.addProperty("trackCount", database.getTrackCount(albumData.getKey()));
