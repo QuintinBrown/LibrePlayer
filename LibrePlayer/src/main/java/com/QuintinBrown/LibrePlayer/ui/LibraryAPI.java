@@ -33,18 +33,13 @@ public class LibraryAPI {
         }
     }
 
-    public String getAlbumTracks(long albumID) {
+    public String getAlbumTracks(String albumID) {
         logger.info("Library API: getAlbumTracks called");
-        return libraryController.getAlbumTracks(albumID);
+        return libraryController.getAlbumTracks(Long.parseLong(albumID));
     }
 
-    public void playAlbum(long albumID) {
+    public void playAlbum(String albumID) {
         logger.info("LibraryAPI: playAlbum called with ID {}", albumID);
-        controller.playAlbum(albumID);
-    }
-
-    public void playTrack(long trackID) {
-        logger.info("Library API: playTrack called with ID {}", trackID);
-        controller.playTrack(trackID);
+        controller.playAlbum(Long.parseLong(albumID));
     }
 }
