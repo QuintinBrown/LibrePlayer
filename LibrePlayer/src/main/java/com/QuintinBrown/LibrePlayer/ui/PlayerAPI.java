@@ -104,10 +104,16 @@ public class PlayerAPI {
             }
 
             JsonObject track = JsonParser.parseString(metadata).getAsJsonObject();
-            track.addProperty("id", trackID);
             queue.add(track);
         }
 
         return queue.toString();
+    }
+
+    public long getCurrentQueueIndex() {
+        logger.info("playerAPI: getCurrentQueueIndex called");
+        long index = controller.getQueueIndex();
+        logger.info("playerAPI: Current queue index is: {}", index);
+        return index;
     }
 }

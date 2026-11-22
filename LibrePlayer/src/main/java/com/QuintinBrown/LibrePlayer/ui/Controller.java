@@ -154,6 +154,10 @@ public class Controller {
         return database.getAlbumFromTrack(trackID);
     }
 
+    public long getQueueIndex() {
+        return playbackQueue.getCurrentIndex();
+    }
+
     public void shutdown() {
         PLAYER.close();
     } 
