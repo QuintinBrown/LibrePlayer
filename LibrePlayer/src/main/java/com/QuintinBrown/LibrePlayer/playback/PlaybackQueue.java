@@ -139,9 +139,16 @@ public class PlaybackQueue {
     }
 
     public void skipToIndex(int index) {
-        Long trackID = queue.get(index);
+        if (index < 0 || index >= queue.size()) {
+            LOGGER.warn("Invalid queue index: {}. Queue Size: {}", index, queue.size());
+            return;
+        }
 
-        setCurrentTrack(trackID);
+        currentIndex = index;
+        updateCurrentTrack();
+
+        LOGGER.info("Skipped to queue index: {}", currentIndex);
+        LOGGER.info("Current track ID: {}", currentTrackID);
     }
 
     private void updateCurrentTrack() {
