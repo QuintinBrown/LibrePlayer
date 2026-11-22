@@ -180,6 +180,9 @@ public class Controller {
 
     public void playTrackAtQueue(int index) {
         playbackQueue.skipToIndex(index);
+
+        currentTrackID = playbackQueue.getCurrentTrack();
+        
         PLAYER.open(playbackQueue.getCurrentTrack());
         PLAYER.play();
 
