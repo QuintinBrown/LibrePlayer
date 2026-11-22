@@ -170,6 +170,10 @@ public class Controller {
         return database.getTrack(trackID);
     }
 
+    public void emptyQueue() {
+        playbackQueue.clearQueue();
+    }
+
     public Player getPlayer() {
         return PLAYER;
     }

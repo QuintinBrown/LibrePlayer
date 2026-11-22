@@ -111,6 +111,12 @@ public class PlayerAPI {
         return queue.toString();
     }
 
+    public void emptyQueue() {
+        logger.info("playerAPI: emptyQueue called");
+        controller.emptyQueue();
+        logger.info("playerAPI: queue cleared");
+    }
+
     public String getCurrentQueueIndex() {
         logger.info("playerAPI: getCurrentQueueIndex called");
         long index = controller.getQueueIndex();
