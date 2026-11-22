@@ -138,6 +138,12 @@ public class PlaybackQueue {
         updateCurrentTrack();
     }
 
+    public void skipToIndex(int index) {
+        Long trackID = queue.get(index);
+
+        setCurrentTrack(trackID);
+    }
+
     private void updateCurrentTrack() {
 
         if (currentIndex >= 0 && currentIndex < queue.size()) {

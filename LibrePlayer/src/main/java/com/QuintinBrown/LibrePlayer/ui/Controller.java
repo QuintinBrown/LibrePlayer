@@ -178,6 +178,10 @@ public class Controller {
         return PLAYER;
     }
 
+    public void playTrackAtQueued(int index) {
+        playbackQueue.skipToIndex(index);
+    }
+
     public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}
 
     public Long getCurrentTrackID(){return currentTrackID;}

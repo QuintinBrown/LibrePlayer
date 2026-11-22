@@ -123,4 +123,10 @@ public class PlayerAPI {
         logger.info("playerAPI: Current queue index is: {}", index);
         return String.valueOf(index);
     }
+
+    public void playQueuedTrack(int index) {
+        logger.info("playerAPI: playQueuedTrack called");
+        controller.playTrackAtQueue(index);
+        logger.info("playerAPI: playing queued track at index {}", index);
+    }
 }
