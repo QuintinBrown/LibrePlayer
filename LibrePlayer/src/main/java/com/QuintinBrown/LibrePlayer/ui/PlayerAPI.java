@@ -59,12 +59,6 @@ public class PlayerAPI {
         return player.getState() == PlaybackState.STOPPED;
     }
 
-    // Library actions
-
-    public String importMusic() {
-        return controller.importMusic();
-    }
-
     public void playTrack(String trackID) {
 
         logger.info("LibraryAPI: playTrack called with ID {}", trackID);

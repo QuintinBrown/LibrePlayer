@@ -8,19 +8,16 @@ import org.slf4j.LoggerFactory;
 
 import com.QuintinBrown.LibrePlayer.library.AlbumMetadata;
 import com.QuintinBrown.LibrePlayer.library.DatabaseManager;
-import com.QuintinBrown.LibrePlayer.library.ImportManager;
 import com.QuintinBrown.LibrePlayer.library.TrackMetadata;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackQueue;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
 
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
 public class Controller {
 
     private final Player PLAYER;
-    private final ImportManager importManager;
     private final DatabaseManager database = new DatabaseManager();
     private final PlaybackQueue playbackQueue;
     private final Logger logger = LoggerFactory.getLogger(Controller.class);
@@ -31,7 +28,6 @@ public class Controller {
     public Controller() {
         this.playbackQueue = new PlaybackQueue();
         this.PLAYER = new Player(database);
-        this.importManager = new ImportManager(database);
 
         PLAYER.setOnTrackFinished(this::playNextTrack);
     }
@@ -129,21 +125,6 @@ public class Controller {
         }
 
         notifyPlaybackState();
-    }
-
-    public String importMusic() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select Music Folder");
-
-        File folder = chooser.showDialog(null);
-
-        if (folder != null) {
-            importManager.importLibrary(folder.toPath());
-        } else {
-            return null;
-        }
-
-        return folder.getAbsolutePath();
     }
 
     private void notifyTrackChanged(long trackID) {
