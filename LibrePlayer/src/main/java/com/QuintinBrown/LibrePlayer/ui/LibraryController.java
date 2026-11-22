@@ -131,6 +131,7 @@ public class LibraryController {
 
         JsonObject metadata = new JsonObject();
 
+        metadata.addProperty("id", String.valueOf(trackID));
         metadata.addProperty("title", track.getTitle());
         metadata.addProperty("artist", String.join(", ", track.getArtists()));
 
