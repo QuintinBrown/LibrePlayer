@@ -74,8 +74,9 @@ public class PlayerAPI {
         controller.playPreviousTrack();
     }
 
-    public Long getCurrentTrackID() {
-        return controller.getCurrentTrackID();
+    public String getCurrentTrackID() {
+        Long id = controller.getCurrentTrackID();
+        return String.valueOf(id);
     }
 
     public String getCurrentTrackMetadata() {
@@ -110,10 +111,10 @@ public class PlayerAPI {
         return queue.toString();
     }
 
-    public long getCurrentQueueIndex() {
+    public String getCurrentQueueIndex() {
         logger.info("playerAPI: getCurrentQueueIndex called");
         long index = controller.getQueueIndex();
         logger.info("playerAPI: Current queue index is: {}", index);
-        return index;
+        return String.valueOf(index);
     }
 }
