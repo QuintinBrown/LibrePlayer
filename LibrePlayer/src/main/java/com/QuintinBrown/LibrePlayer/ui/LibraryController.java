@@ -139,12 +139,10 @@ public class LibraryController {
 
         metadata.addProperty("releaseDate",album != null ? album.getReleaseDate() : "");
 
-        metadata.addProperty(
-                "artworkPath",
-                album != null && album.getCoverPath() != null
-                        ? album.getCoverPath().toString()
-                        : null
-        );
+        Path coverPath = album.getCoverPath();
+        String artworkPath = coverPath != null ? coverPath.toAbsolutePath().toUri().toString() : null;
+
+        metadata.addProperty("artworkPath", artworkPath);
 
         metadata.addProperty("duration", track.getLengthSeconds());
 
