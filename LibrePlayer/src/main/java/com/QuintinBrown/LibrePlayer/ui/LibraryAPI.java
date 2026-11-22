@@ -42,4 +42,10 @@ public class LibraryAPI {
         logger.info("LibraryAPI: playAlbum called with ID {}", albumID);
         controller.playAlbum(Long.parseLong(albumID));
     }
+
+    public void reconnectDB() {
+        logger.info("LibraryController: Attempting to connect to database");
+        libraryController.reconnectDB();
+        logger.info("LibraryController: Database connected");
+    }
 }

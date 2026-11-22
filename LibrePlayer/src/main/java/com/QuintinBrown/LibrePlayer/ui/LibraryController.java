@@ -150,4 +150,8 @@ public class LibraryController {
 
         return metadata.toString();
     }
+
+    public void reconnectDB() {
+        database.openConnection();
+    }
 }
