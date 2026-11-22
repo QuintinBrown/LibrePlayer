@@ -60,9 +60,18 @@ public class PlayerAPI {
     }
 
     public void playTrack(String trackID) {
-
-        logger.info("LibraryAPI: playTrack called with ID {}", trackID);
+        logger.info("playerAPI: playTrack called with ID {}", trackID);
         controller.playTrack(Long.parseLong(trackID));
+    }
+
+    public void playNextTrack() {
+        logger.info("playerAPI: Playing next track");
+        controller.playNextTrack();
+    }
+
+    public void playPreviousTrack() {
+        logger.info("playerAPI: Playing previous track");
+        controller.playPreviousTrack();
     }
 
     public Long getCurrentTrackID() {
