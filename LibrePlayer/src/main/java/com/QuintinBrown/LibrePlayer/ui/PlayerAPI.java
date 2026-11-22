@@ -118,9 +118,9 @@ public class PlayerAPI {
     }
 
     public String getCurrentQueueIndex() {
-        logger.info("playerAPI: getCurrentQueueIndex called");
+        logger.debug("playerAPI: getCurrentQueueIndex called");
         long index = controller.getQueueIndex();
-        logger.info("playerAPI: Current queue index is: {}", index);
+        logger.debug("playerAPI: Current queue index is: {}", index);
         return String.valueOf(index);
     }
 
