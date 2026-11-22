@@ -178,7 +178,7 @@ public class Controller {
         return PLAYER;
     }
 
-    public void playTrackAtQueued(int index) {
+    public void playTrackAtQueue(int index) {
         playbackQueue.skipToIndex(index);
     }
 
