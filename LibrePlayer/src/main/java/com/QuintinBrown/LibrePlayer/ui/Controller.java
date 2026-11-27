@@ -2,6 +2,7 @@ package com.QuintinBrown.LibrePlayer.ui;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,9 @@ import com.QuintinBrown.LibrePlayer.library.TrackMetadata;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackQueue;
 import com.QuintinBrown.LibrePlayer.playback.PlaybackState;
 import com.QuintinBrown.LibrePlayer.playback.Player;
+import com.QuintinBrown.LibrePlayer.ui.event.UIEvent;
+import com.QuintinBrown.LibrePlayer.ui.event.UIEventListener;
+import com.QuintinBrown.LibrePlayer.ui.event.UIEventType;
 
 import javafx.stage.FileChooser;
 
@@ -23,6 +27,8 @@ public class Controller {
     private final Logger logger = LoggerFactory.getLogger(Controller.class);
     private PlaybackListener playbackListener;
     private Long currentTrackID;
+
+    private final CopyOnWriteArrayList<UIEventListener> uiEventListeners = new CopyOnWriteArrayList<>();
 
 
     public Controller() {
@@ -79,6 +85,7 @@ public class Controller {
         PLAYER.play();
 
         notifyTrackChanged(trackID);
+        notifyQueueIndexChanged();
         notifyPlaybackState();
     }
 
@@ -96,6 +103,7 @@ public class Controller {
         PLAYER.play();
 
         notifyTrackChanged(trackID);
+        notifyQueueIndexChanged();
         notifyPlaybackState();
     }
 
@@ -113,6 +121,8 @@ public class Controller {
         logger.info("Track IDs: {}", album.getTracks());
 
         playbackQueue.setQueue(album.getTracks());
+
+        notifyQueueChanged();
 
         playNextTrack();
     }
@@ -172,6 +182,10 @@ public class Controller {
 
     public void emptyQueue() {
         playbackQueue.clearQueue();
+        currentTrackID = null;
+
+        notifyQueueChanged();
+        notifyPlaybackState();
     }
 
     public Player getPlayer() {
@@ -187,7 +201,38 @@ public class Controller {
         PLAYER.play();
 
         notifyTrackChanged(playbackQueue.getCurrentTrack());
+        notifyQueueIndexChanged();
         notifyPlaybackState();
+    }
+
+    public void addUIEventListener(UIEventListener listener) {
+        uiEventListeners.add(listener);
+    }
+
+    public void removeUIEventListener(UIEventListener listener) {
+        uiEventListeners.remove(listener);
+    }
+
+    private void notifyUI(UIEventType type, Object data) {
+        UIEvent event = new UIEvent(type, data);
+
+        for (UIEventListener listener : uiEventListeners) {
+            try {
+                listener.onUIEvent(event);
+            } catch (Exception e) {
+                logger.error("Failed to notify UI listener for: {}", type, e);
+            }
+        }
+    }
+
+    private void notifyQueueChanged() {
+        notifyUI(UIEventType.QUEUE_CHANGED, getPlaybackQueue());
+
+        notifyUI(UIEventType.QUEUE_INDEX_CHANGED, getQueueIndex());
+    }
+
+    private void notifyQueueIndexChanged() {
+        notifyUI(UIEventType.QUEUE_INDEX_CHANGED, getQueueIndex());
     }
 
     public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}

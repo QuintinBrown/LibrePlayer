@@ -55,6 +55,8 @@ public class UIManager {
 
         setupPlaybackListener();
 
+        setupUIEventListener();
+
         logger.info("UIManager initialized");
     }
 
@@ -299,6 +301,32 @@ public class UIManager {
 
         });
 
+    }
+
+    private void setupUIEventListener() {
+        controller.addUIEventListener(event -> {
+            Platform.runLater(() -> {
+                try {
+                    Object available = webEngine.executeScript(
+                        "typeof window.librePlayerUI !== 'undefined' && " +
+                        "typeof window.librePlayerUI.handleBackendEvent == 'function'"
+                    );
+
+                    if (!Boolean.TRUE.equals(available)) {
+                        return;
+                    }
+
+                    String eventJson = gson.toJson(event);
+
+                    webEngine.executeScript(
+                        "window.librePlayerUI.handleBackendEvent(" +
+                        eventJson + ")"
+                    );
+                } catch (Exception e) {
+                    logger.error("Failed to forward UI event: {}", event.getType(), e);
+                }
+            });
+        });
     }
 
     public WebView getWebView(){return webView;}
