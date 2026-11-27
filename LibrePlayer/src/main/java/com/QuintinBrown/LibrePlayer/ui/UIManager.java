@@ -319,8 +319,9 @@ public class UIManager {
                     String eventJson = gson.toJson(event);
 
                     webEngine.executeScript(
-                        "window.librePlayerUI.handleBackendEvent(" +
-                        eventJson + ")"
+                        "window.dispatchEvent(new CustomEvent(" +
+                        "'libreplayer-backend-event', {" +
+                        "detail: " + eventJson + "}));"
                     );
                 } catch (Exception e) {
                     logger.error("Failed to forward UI event: {}", event.getType(), e);
