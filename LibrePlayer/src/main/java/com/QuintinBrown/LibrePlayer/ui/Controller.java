@@ -52,11 +52,13 @@ public class Controller {
     public void play() {
         PLAYER.play();
         notifyPlaybackState();
+        notifyPlayPause();
     }
 
     public void pause() {
         PLAYER.pause();
         notifyPlaybackState();
+        notifyPlayPause();
     }
 
     public void playTrack(long trackID) {
@@ -233,6 +235,14 @@ public class Controller {
 
     private void notifyQueueIndexChanged() {
         notifyUI(UIEventType.QUEUE_INDEX_CHANGED, getQueueIndex());
+    }
+
+    private void notifyTrackChanged() {
+        notifyUI(UIEventType.TRACK_CHANGED, getCurrentTrackID());
+    }
+
+    private void notifyPlayPause() {
+        notifyUI(UIEventType.PLAYBACK_STATE_CHANGED, PLAYER.getState());
     }
 
     public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}
