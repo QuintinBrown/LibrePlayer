@@ -198,8 +198,8 @@ public class UIManager {
     private void initializeNowPlayingMetadata() {
         Platform.runLater(() -> {
             try {
-                long trackID = controller.getCurrentTrackID();
-                if (trackID <= 0) {
+                Long trackID = controller.getCurrentTrackID();
+                if (trackID == null || trackID <= 0) {
                     logger.debug("No current track to display");
                     return;
                 }
@@ -304,30 +304,26 @@ public class UIManager {
     }
 
     private void setupUIEventListener() {
+
         controller.addUIEventListener(event -> {
             Platform.runLater(() -> {
                 try {
-                    Object available = webEngine.executeScript(
-                        "typeof window.librePlayerUI !== 'undefined' && " +
-                        "typeof window.librePlayerUI.handleBackendEvent == 'function'"
-                    );
-
-                    if (!Boolean.TRUE.equals(available)) {
-                        return;
-                    }
-
                     String eventJson = gson.toJson(event);
-
+                    logger.info("Forwarding UI event to JavaScript: {}", eventJson);
                     webEngine.executeScript(
                         "window.dispatchEvent(new CustomEvent(" +
                         "'libreplayer-backend-event', {" +
-                        "detail: " + eventJson + "}));"
-                    );
+                        "detail: " + eventJson +
+                        "}));");
+
                 } catch (Exception e) {
-                    logger.error("Failed to forward UI event: {}", event.getType(), e);
+                    logger.error(
+                        "Failed to forward UI event: {}", event.getType(), e);
                 }
             });
+
         });
+
     }
 
     public WebView getWebView(){return webView;}
