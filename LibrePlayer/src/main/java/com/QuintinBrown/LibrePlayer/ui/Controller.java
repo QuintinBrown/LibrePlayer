@@ -52,13 +52,11 @@ public class Controller {
     public void play() {
         PLAYER.play();
         notifyPlaybackState();
-        notifyPlayPause();
     }
 
     public void pause() {
         PLAYER.pause();
         notifyPlaybackState();
-        notifyPlayPause();
     }
 
     public void playTrack(long trackID) {
@@ -77,6 +75,8 @@ public class Controller {
         if (trackID == null) {
             currentTrackID = null;
             PLAYER.stop();
+            notifyUI(UIEventType.TRACK_CHANGED, null);
+            notifyQueueChanged();
             notifyPlaybackState();
             return;
         }
@@ -141,6 +141,8 @@ public class Controller {
 
     private void notifyTrackChanged(long trackID) {
 
+        notifyUI(UIEventType.TRACK_CHANGED, trackID);
+
         if (playbackListener != null) {
             playbackListener.onTrackChanged(trackID);
         }
@@ -149,10 +151,11 @@ public class Controller {
 
     private void notifyPlaybackState() {
 
+        PlaybackState state = PLAYER.getState();
+
+        notifyUI(UIEventType.PLAYBACK_STATE_CHANGED, state);
+
         if (playbackListener != null) {
-
-            PlaybackState state = PLAYER.getState();
-
             playbackListener.onPlaybackStateChanged(
                 state == PlaybackState.PLAYING,
                 state == PlaybackState.PAUSED
@@ -235,14 +238,6 @@ public class Controller {
 
     private void notifyQueueIndexChanged() {
         notifyUI(UIEventType.QUEUE_INDEX_CHANGED, getQueueIndex());
-    }
-
-    private void notifyTrackChanged() {
-        notifyUI(UIEventType.TRACK_CHANGED, getCurrentTrackID());
-    }
-
-    private void notifyPlayPause() {
-        notifyUI(UIEventType.PLAYBACK_STATE_CHANGED, PLAYER.getState());
     }
 
     public List<Long> getPlaybackQueue(){return playbackQueue.getQueue();}
