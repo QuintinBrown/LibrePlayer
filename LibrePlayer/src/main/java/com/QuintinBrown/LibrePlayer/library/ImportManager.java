@@ -10,6 +10,7 @@ public class ImportManager {
     private final FileScanner scanner;
     private final MetadataExtractor extractor;
     private final DatabaseManager database;
+    private final AlbumArtworkGenerator generator;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportManager.class);
 
@@ -17,6 +18,7 @@ public class ImportManager {
         this.scanner = new FileScanner();
         this.extractor = new MetadataExtractor();
         this.database = database;
+        this.generator = new AlbumArtworkGenerator();
     }
 
     private void importAlbum(AlbumFolder folder) {
@@ -28,6 +30,20 @@ public class ImportManager {
 
         try {
             long albumID = database.insertAlbum(album);
+
+            if (album.getCoverPath() == null) {
+                try {
+                    Path artworkPath = generator.generate(albumID, album);
+                    album.setArtworkPath(artworkPath);
+
+                    if (artworkPath != null) {
+                        album.setArtworkPath(artworkPath);
+                        database.updateAlbumArtwork(albumID, artworkPath);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed generating artwork for: {}", album.getName(), e);
+                }
+            }
 
             for (TrackMetadata track : album.getTracks()) {
                 long trackID = database.insertTrack(albumID, track);
