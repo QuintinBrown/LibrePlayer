@@ -17,7 +17,7 @@ public class AppDirectories {
     private static final Path LOGS = ROOT.resolve("logs");
     private static final Path DATABASE = ROOT.resolve("database");
     private static final Path IMAGES = ROOT.resolve("images");
-    private static final Path ALBUM_COVERS = IMAGES.resolve("covers");
+    private static final Path ALBUM_COVERS = IMAGES.resolve("album_covers");
 
     private static Path getApplicationDirectory() {
 
