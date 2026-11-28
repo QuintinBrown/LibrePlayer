@@ -6,7 +6,7 @@ import java.util.List;
 public class AlbumExtractionMetadata {
     private final String name;
     private final Path folderPath;
-    private final Path coverPath;
+    private Path coverPath;
     private final String releaseDate;
     private final int lengthSeconds;
     private final int discCount;
@@ -46,4 +46,6 @@ public class AlbumExtractionMetadata {
     public List<TrackMetadata> getTracks(){return tracks;}
     public List<String> getAlbumArtists(){return albumArtists;}
     public List<String> getGenres(){return genres;}
+
+    public void setArtworkPath(Path path){this.coverPath = path;}
 }
