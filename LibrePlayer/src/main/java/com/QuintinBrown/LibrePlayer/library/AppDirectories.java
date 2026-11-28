@@ -16,6 +16,8 @@ public class AppDirectories {
     private static final Path THEMES = ROOT.resolve("themes");
     private static final Path LOGS = ROOT.resolve("logs");
     private static final Path DATABASE = ROOT.resolve("database");
+    private static final Path IMAGES = ROOT.resolve("images");
+    private static final Path ALBUM_COVERS = IMAGES.resolve("covers");
 
     private static Path getApplicationDirectory() {
 
@@ -60,6 +62,8 @@ public class AppDirectories {
         Files.createDirectories(ROOT.resolve("themes"));
         Files.createDirectories(ROOT.resolve("logs"));
         Files.createDirectories(ROOT.resolve("database"));
+        Files.createDirectories(ROOT.resolve("images"));
+        Files.createDirectories(IMAGES.resolve("album_covers"));
         logger.info("Finished creating directories");
     }
 
@@ -68,4 +72,8 @@ public class AppDirectories {
     public static Path logsDir() {return LOGS;}
 
     public static Path databaseDir() {return DATABASE;}
+
+    public static Path imagesDir() {return IMAGES;}
+
+    public static Path coversDir() {return ALBUM_COVERS;}
 }
