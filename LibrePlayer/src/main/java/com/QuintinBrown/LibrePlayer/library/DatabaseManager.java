@@ -622,4 +622,20 @@ public class DatabaseManager {
             throw new RuntimeException(e);
         }
     }
+
+    public void updateAlbumArtwork(Long albumID, Path coverPath) {
+        String update_sql = """
+                UPDATE album
+                SET cover_path = ?
+                WHERE id = ?
+                """;
+
+        try (PreparedStatement update_stmt = conn.prepareStatement(update_sql)) {
+            update_stmt.setString(1, coverPath.toString());
+            update_stmt.setLong(2, albumID);
+            update_stmt.execute();
+        } catch (SQLException e) {
+            LOGGER.error("Failed to update cover art for album: {}", albumID, e);
+        }
+    }
 }
